@@ -2,6 +2,7 @@ from abc import abstractmethod
 
 
 class IUnitOfWork:
+
     @abstractmethod
     def register_new(self): raise NotImplementedError
 
