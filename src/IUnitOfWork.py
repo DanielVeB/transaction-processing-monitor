@@ -3,16 +3,16 @@ from abc import abstractmethod
 
 class IUnitOfWork:
     @abstractmethod
-    def registerNew(self): raise NotImplementedError
+    def register_new(self): raise NotImplementedError
 
     @abstractmethod
-    def registerDirty(self): raise NotImplementedError
+    def register_dirty(self): raise NotImplementedError
 
     @abstractmethod
-    def registerClean(self): raise NotImplementedError
+    def register_clean(self): raise NotImplementedError
 
     @abstractmethod
-    def registerDelete(self): raise NotImplementedError
+    def register_delete(self): raise NotImplementedError
 
     @abstractmethod
     def commit(self): raise NotImplementedError
