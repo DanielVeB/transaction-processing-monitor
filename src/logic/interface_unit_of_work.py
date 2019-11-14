@@ -1,19 +1,13 @@
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 
 
-class IUnitOfWork:
-
-    @abstractmethod
-    def register_new(self): raise NotImplementedError
+class IUnitOfWork(ABC):
 
     @abstractmethod
-    def register_dirty(self): raise NotImplementedError
+    def add_repository(self, repo): raise NotImplementedError
 
     @abstractmethod
-    def register_clean(self): raise NotImplementedError
-
-    @abstractmethod
-    def register_delete(self): raise NotImplementedError
+    def delete_repository(self, repo): raise NotImplementedError
 
     @abstractmethod
     def commit(self): raise NotImplementedError

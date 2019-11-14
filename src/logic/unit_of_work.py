@@ -11,18 +11,12 @@ class UnitOfWork(IUnitOfWork):
         self.data_base_repository = DataBaseRepository(session)
         self.app_server_repository = ApplicationServerRepository(session)
 
-    def register_new(self):
-        self.logger.info("Registering new object")
+    def add_repository(self, repo):
+        self.logger.info("Adding new repo")
         print("register_new")
 
-    def register_dirty(self):
-        print("register_dirty")
-
-    def register_clean(self):
-        print("register_clean")
-
-    def register_delete(self):
-        print("register_delete")
+    def delete_repository(self, repo):
+        self.logger.info("Deleting repo")
 
     def commit(self):
         self.logger.info("Commit all changes")
