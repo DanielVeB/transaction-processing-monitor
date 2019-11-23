@@ -1,10 +1,13 @@
 from flask import Flask
+import logging
+
 
 app = Flask(__name__)
+logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', datefmt='%d-%b-%y %H:%M:%S')
 
 
 @app.route('/hello')
-def helloIndex():
+def hello_index():
     return 'Hello World from Python Flask!'
 
 

@@ -1,7 +1,9 @@
 # transaction-processing-monitor
 
+## Environment variables
 To run project add this variable to you environment variables:
-## name
+
+### name
 FLASK_ENV
-## value
+### value
 development
