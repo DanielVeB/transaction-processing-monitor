@@ -1,3 +1,4 @@
+from src.logic.commands import Command
 from src.repository.interface_repository import IRepository
 import logging
 from src.dto.connection import db, Test
@@ -12,20 +13,17 @@ class TestRepository(IRepository):
 
     def get(self, item):
         self.logger.info("Getting %s from DataBase", item)
+        self.changed_items_list.append((item.clone(), Command.UPDATE))
         return Test.query.filter(item).first()
 
-    def get_all(self):
-        self.logger.info("Getting all from DataBase")
-        return Test.query.all()
-
-    def create(self, item):
+    def insert(self, item):
         self.logger.info("Creating %s in DataBase", item)
-        self.changed_items_list.append(item)
+        self.changed_items_list.append((item.clone(), Command.INSERT))
         self.data_base_connection.session.add(item)
 
     def delete(self, item):
         self.logger.info("Deleting %s from DataBase", item)
-        self.changed_items_list.append(item)
+        self.changed_items_list.append((item.clone(), Command.DELETE))
         self.data_base_connection.session.delete(item)
 
 

@@ -40,10 +40,10 @@ class Coordinator(IUnitOfWork):
         self.logger.info("Adding repository %s to repository list", repo.__name__)
         self.repository_list.append(repo)
 
-    def execute_command(self, command, repo):
+    def execute_command(self, action, repo):
         if repo in self.repository_list:
             self.logger.info("Executing command for %s repository", repo.__name__)
-            repo.execute_command(command)
-            self._changes_list.append((repo, command))
+            action.execute(repo)
+            self._changes_list.append((repo, action))
         else:
             self.logger.exception("Repo %s not found in repository list", repo.__name__)
