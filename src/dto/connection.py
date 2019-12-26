@@ -13,6 +13,14 @@ app.config['SQLALCHEMY_DATABASE_URI'] = MYSQL_CONNECTION
 db = SQLAlchemy(app)
 
 
+# TODO: Class for connections, multiple databases
+class Connection:
+    @staticmethod
+    def create_connection(connection):
+        app.config['SQLALCHEMY_DATABASE_URI'] = connection
+        return SQLAlchemy(app)
+
+
 class Test(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     value = db.Column(db.Integer, nullable=False)
