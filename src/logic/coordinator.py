@@ -6,7 +6,6 @@ from flask import jsonify
 from src.logic.commands import Command
 from src.logic.interface_unit_of_work import IUnitOfWork
 from src.logic.transactions import DeleteAction, InsertAction, RestoreAction
-from src.main import app
 from src.repository.repos import TestRepository
 
 
@@ -18,12 +17,12 @@ class Coordinator(IUnitOfWork):
         self._committed_repository_list = []
         self._changes_list = []
 
-    @app.route('/coordinator/<String:repo_uuid>', methods=['DELETE'])
+    # @app.route('/coordinator/<String:repo_uuid>', methods=['DELETE'])
     def delete_repository(self, repo_uuid):
         self.logger.info("Removing repository %s from repository list", repo_uuid)
         self.repository_dict.pop(repo_uuid)
 
-    @app.route('/coordinator/commit', methods=['GET'])
+    # @app.route('/coordinator/commit', methods=['GET'])
     def commit(self):
         self.logger.info("Committing changes")
         for repo in self.repository_dict.values():
@@ -50,7 +49,7 @@ class Coordinator(IUnitOfWork):
         for repo in self.repository_dict.values():
             repo.data_base_connection.session.clear()
 
-    @app.route('/coordinator/<String:connection', methods=['PUT'])
+    # @app.route('/coordinator/<String:connection', methods=['PUT'])
     def add_repository(self, connection):
         repo = TestRepository(connection)
         repo_uuid = uuid.UUID
