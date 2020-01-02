@@ -1,10 +1,11 @@
 import sys
 
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_restplus import Api, Resource, fields
 
 import logging
 
+from src.dto.resource import DpResource
 from src.logic.coordinator import Coordinator
 
 app = Flask(__name__)
@@ -18,18 +19,41 @@ logging.basicConfig(level=logging.DEBUG,
 
 # json models
 
-insert_repository = ns_repo.model(name="repo",
-                                  model={
-    "type": fields.String(description= "type of repository, possible values:"
-                                       "\nMySQL"
-                                       "\nPostgreSQL"
-                                       "\nSQLite",
-                          example="MySQL", required= True ),
-    "host": fields.String(description = "", example="53.231.57.128"),
-    "port": fields.String(description = "", example="12017"),
-    "user": fields.String(description = "", example="user"),
-    "database": fields.String(description = "", example="password"),
-})
+repository_dto = \
+    ns_repo.model(name="repo",
+                  model={
+                      "type": fields.String(description="type of repository, possible values:"
+                                                        "\nMySQL"
+                                                        "\nPostgreSQL"
+                                                        "\nSQLite",
+                                            example="MySQL",
+                                            required=True),
+                      "host": fields.String(description="", example="53.231.57.128"),
+                      "port": fields.String(description="", example="12017"),
+                      "user": fields.String(description="", example="user"),
+                      "password": fields.String(description="", example="password"),
+                  })
+
+transaction_dto = ns_transactions.model(name="transaction",
+                                        model={
+                                            "repo_id": fields.String(
+                                                description="Unique identifier of repository",
+                                                required=True,
+                                                example="531da-3123a-54fdcb-125ab"
+                                            ),
+                                            "operation_type": fields.String(
+                                                description="Type of operation, possible values:"
+                                                            "\nINSERT"
+                                                            "\nGET"
+                                                            "\nDELETE",
+                                                required=True,
+                                                example="INSERT"
+                                            ),
+                                            "object": fields.String(
+                                                description="object on which the operation will be executed"
+
+                                            )
+                                        })
 
 coordinator = Coordinator()
 
@@ -53,10 +77,20 @@ class Repository(Resource):
 class AddRepository(Resource):
 
     @ns_repo.doc()
-    @ns_repo.expect([insert_repository])
+    @ns_repo.expect([repository_dto], validate=True )
     def put(self):
-        """Return information about repository"""
-        return id
+        """Add repository"""
+        data = request.get_json()
+        resources = []
+        for resource in data:
+            resources.append(DpResource(
+                host=resource.get('host'),
+                port=resource.get('port'),
+                user=resource.get('user'),
+                password=resource.get('password')
+            ))
+        print(resources[0].id)
+        pass
 
 
 @ns_transactions.route('/<int:id>')
@@ -69,6 +103,16 @@ class TransactionController(Resource):
         logging.info("Delete repository with id " + str(id))
         # coordinator.delete_repository(id)
         return id
+
+
+@ns_transactions.route('')
+class AddTransactions(Resource):
+
+    @ns_transactions.doc()
+    @ns_transactions.expect([transaction_dto],validate=True)
+    def put(self):
+        """Add transaction(s) """
+        pass
 
 
 if __name__ == '__main__':
