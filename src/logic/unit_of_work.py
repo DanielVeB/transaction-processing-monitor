@@ -1,5 +1,5 @@
 from src.logic.interface_unit_of_work import IUnitOfWork
-from src.repository.repos import DataBaseRepository, ApplicationServerRepository
+from src.repository.repos import TestRepository, ApplicationServerRepository
 import logging
 
 
@@ -8,7 +8,7 @@ class UnitOfWork(IUnitOfWork):
 
     def __init__(self, session):
         self.session = session
-        self.data_base_repository = DataBaseRepository(session)
+        self.data_base_repository = TestRepository(session)
         self.app_server_repository = ApplicationServerRepository(session)
 
     def add_repository(self, repo):
