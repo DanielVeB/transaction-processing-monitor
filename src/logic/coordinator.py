@@ -3,6 +3,7 @@ import uuid as uuid
 
 from flask import jsonify
 
+from src.dto.resource import DpResource
 from src.logic.commands import Command
 from src.logic.interface_unit_of_work import IUnitOfWork
 from src.logic.transactions import DeleteAction, InsertAction, RestoreAction
@@ -17,10 +18,20 @@ class Coordinator(IUnitOfWork):
         self._committed_repository_list = []
         self._changes_list = []
 
-    # @app.route('/coordinator/<String:repo_uuid>', methods=['DELETE'])
+    def get_all_repositories(self):
+        return self.repository_dict
+
+    def add_repositories(self,repositories: [DpResource]):
+        for repo in repositories:
+            self.repository_dict[str(uuid.uuid1())] = repo
+
     def delete_repository(self, repo_uuid):
         self.logger.info("Removing repository %s from repository list", repo_uuid)
-        self.repository_dict.pop(repo_uuid)
+        return self.repository_dict.pop(repo_uuid, None)
+
+    def get_repository(self, repo_uuid):
+        self.logger.info("Get repository %s from repository list", repo_uuid)
+        return self.repository_dict.get(repo_uuid, None)
 
     # @app.route('/coordinator/commit', methods=['GET'])
     def commit(self):
@@ -49,7 +60,6 @@ class Coordinator(IUnitOfWork):
         for repo in self.repository_dict.values():
             repo.data_base_connection.session.clear()
 
-    # @app.route('/coordinator/<String:connection', methods=['PUT'])
     def add_repository(self, connection):
         repo = TestRepository(connection)
         repo_uuid = uuid.UUID

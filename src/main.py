@@ -11,7 +11,7 @@ from src.logic.coordinator import Coordinator
 app = Flask(__name__)
 api = Api(app=app)
 
-ns_repo = api.namespace('repository', description='')
+ns_resource = api.namespace('repository', description='')
 ns_transactions = api.namespace('transaction', description='')
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s',
@@ -20,19 +20,19 @@ logging.basicConfig(level=logging.DEBUG,
 # json models
 
 repository_dto = \
-    ns_repo.model(name="repo",
-                  model={
-                      "type": fields.String(description="type of repository, possible values:"
-                                                        "\nMySQL"
-                                                        "\nPostgreSQL"
-                                                        "\nSQLite",
-                                            example="MySQL",
-                                            required=True),
-                      "host": fields.String(description="", example="53.231.57.128"),
-                      "port": fields.String(description="", example="12017"),
-                      "user": fields.String(description="", example="user"),
-                      "password": fields.String(description="", example="password"),
-                  })
+    ns_resource.model(name="resource",
+                      model={
+                          "type": fields.String(description="type of repository, possible values:"
+                                                            "\nMySQL"
+                                                            "\nPostgreSQL"
+                                                            "\nSQLite",
+                                                example="MySQL",
+                                                required=True),
+                          "host": fields.String(description="", example="53.231.57.128"),
+                          "port": fields.String(description="", example="12017"),
+                          "user": fields.String(description="", example="user"),
+                          "password": fields.String(description="", example="password"),
+                      })
 
 transaction_dto = ns_transactions.model(name="transaction",
                                         model={
@@ -47,39 +47,81 @@ transaction_dto = ns_transactions.model(name="transaction",
                                                             "\nGET"
                                                             "\nDELETE",
                                                 required=True,
-                                                example="INSERT"
+                                                example="GET"
                                             ),
                                             "object": fields.String(
-                                                description="object on which the operation will be executed"
-
+                                                description="",
+                                                example="{'user':'User'"
+                                                        ",'field1': 'val1' }",
+                                                required=False),
+                                            "where_condition": fields.String(
+                                                description="For update,delete and get operation. You have to write "
+                                                            "here correct condition after WHERE clause",
+                                                example="age BETWEEN 20 AND 26",
+                                                required=False
                                             )
                                         })
 
 coordinator = Coordinator()
 
 
-@ns_repo.route('/<int:id>')
-@ns_repo.param('id', 'The repository identifier')
+class Invalid_ID(Exception):
+    status_code = 401
+
+    def __init__(self, message, status_code=None, payload=None):
+        Exception.__init__(self)
+        if status_code is not None:
+            self.status_code = status_code
+        self.message = message
+        self.payload = payload
+
+    def to_dict(self):
+        rv = dict(self.payload or ())
+        rv['message'] = self.message
+        return rv
+
+
+@app.errorhandler(Invalid_ID)
+def handle_invalid_usage(error):
+    response = jsonify(error.to_dict())
+    response.status_code = error.status_code
+    return response
+
+
+@ns_resource.route('/<int:id>')
+@ns_resource.param('id', 'The repository identifier')
 class Repository(Resource):
 
-    @ns_repo.doc()
+    @ns_resource.doc()
+    @ns_resource.response(404, "NOT FOUND")
+    @ns_resource.response(200, "SUCCESS")
     def delete(self, id):
-        """Delete repository with given id"""
-        return id
+        """Delete resource with given id"""
+        logging.info("Delete resource with id " + str(id))
+        answer = coordinator.delete_repository(id)
+        if answer is None:
+            raise Invalid_ID("Resource with id " + str(id) + " not found", 404)
+        return answer
 
-    @ns_repo.doc()
+    @ns_resource.doc()
+    @ns_resource.response(404, "NOT FOUND")
+    @ns_resource.response(200, "SUCCESS")
     def get(self, id):
         """Return information about repository"""
-        return id
+        logging.info("Get resource with id " + str(id))
+        answer = coordinator.get_repository(id)
+        if answer is None:
+            raise Invalid_ID("Resource with id " + str(id) + " not found", 404)
+        return answer
 
 
-@ns_repo.route('')
+@ns_resource.route('')
 class AddRepository(Resource):
 
-    @ns_repo.doc()
-    @ns_repo.expect([repository_dto], validate=True )
+    @ns_resource.doc()
+    @ns_resource.expect([repository_dto], validate=True)
     def put(self):
-        """Add repository"""
+        """Add resource"""
         data = request.get_json()
         resources = []
         for resource in data:
@@ -89,8 +131,16 @@ class AddRepository(Resource):
                 user=resource.get('user'),
                 password=resource.get('password')
             ))
-        print(resources[0].id)
-        pass
+        coordinator.add_repositories(resources)
+
+    @ns_resource.doc()
+    def get(self):
+        """Get all resources"""
+        repos = coordinator.get_all_repositories()
+        json_repos = dict()
+        for repo in repos:
+            json_repos[repo] = repos[repo].serialize()
+        return json_repos
 
 
 @ns_transactions.route('/<int:id>')
@@ -109,7 +159,7 @@ class TransactionController(Resource):
 class AddTransactions(Resource):
 
     @ns_transactions.doc()
-    @ns_transactions.expect([transaction_dto],validate=True)
+    @ns_transactions.expect([transaction_dto], validate=True)
     def put(self):
         """Add transaction(s) """
         pass
