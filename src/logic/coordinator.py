@@ -22,8 +22,10 @@ class Coordinator(IUnitOfWork):
         return self.repository_dict
 
     def add_repositories(self,repositories: [DpResource]):
+        id = str(uuid.uuid1())
         for repo in repositories:
-            self.repository_dict[str(uuid.uuid1())] = repo
+            self.repository_dict[id] = repo
+        return id
 
     def delete_repository(self, repo_uuid):
         self.logger.info("Removing repository %s from repository list", repo_uuid)

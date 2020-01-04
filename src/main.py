@@ -101,7 +101,7 @@ class Repository(Resource):
         answer = coordinator.delete_repository(id)
         if answer is None:
             raise Invalid_ID("Resource with id " + id + " not found", 404)
-        return answer
+        return answer.serialize()
 
     @ns_resource.doc()
     @ns_resource.response(404, "NOT FOUND")
@@ -112,7 +112,7 @@ class Repository(Resource):
         answer = coordinator.get_repository(id)
         if answer is None:
             raise Invalid_ID("Resource with id " + str(id) + " not found", 404)
-        return answer
+        return answer.serialize()
 
 
 @ns_resource.route('')
@@ -131,7 +131,8 @@ class AddRepository(Resource):
                 user=resource.get('user'),
                 password=resource.get('password')
             ))
-        coordinator.add_repositories(resources)
+        repo_id = coordinator.add_repositories(resources)
+        return "Added repo with id: " + repo_id
 
     @ns_resource.doc()
     def get(self):
