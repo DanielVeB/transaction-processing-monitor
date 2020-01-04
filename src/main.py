@@ -88,7 +88,7 @@ def handle_invalid_usage(error):
     return response
 
 
-@ns_resource.route('/<int:id>')
+@ns_resource.route('/<string:id>')
 @ns_resource.param('id', 'The repository identifier')
 class Repository(Resource):
 
@@ -97,10 +97,10 @@ class Repository(Resource):
     @ns_resource.response(200, "SUCCESS")
     def delete(self, id):
         """Delete resource with given id"""
-        logging.info("Delete resource with id " + str(id))
+        logging.info("Delete resource with id " + id)
         answer = coordinator.delete_repository(id)
         if answer is None:
-            raise Invalid_ID("Resource with id " + str(id) + " not found", 404)
+            raise Invalid_ID("Resource with id " + id + " not found", 404)
         return answer
 
     @ns_resource.doc()
@@ -143,15 +143,15 @@ class AddRepository(Resource):
         return json_repos
 
 
-@ns_transactions.route('/<int:id>')
+@ns_transactions.route('/<string:id>')
 @ns_transactions.param('id', 'The transaction identifier')
 class TransactionController(Resource):
 
     @ns_transactions.doc()
     def delete(self, id):
         """Delete transaction with given id"""
-        logging.info("Delete repository with id " + str(id))
-        # coordinator.delete_repository(id)
+        logging.info("Delete repository with id " + id)
+        coordinator.delete_repository(id)
         return id
 
 
