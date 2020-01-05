@@ -1,7 +1,6 @@
 from src.repository import repos
 from src.dto import connection_config
 
-# to factory jakies typowo pythonowe bo oni w sumie to nie maja interfejsow
 
 #
 # class RepoFactory:
@@ -23,13 +22,13 @@ class RepoFactory:
     def getRepo(self, repo_type):
 
         if repo_type == "mysql":
-            return repos.TestMySQL(connection_config.MYSQL_URI)
+            return repos.TestRepository(connection_config.REPO_TYPES['mysql'] + connection_config.URI)
 
         elif repo_type == "postgresql":
-            return repos.TestMySQL(connection_config.POSTGRES_URI)
+            return repos.TestRepository(connection_config.REPO_TYPES['postgres'] + connection_config.URI)
 
         elif repo_type == "oracle":
-            return repos.TestMySQL(connection_config.ORACLE_URI)
+            return repos.TestRepository(connection_config.REPO_TYPES['oracle'] + connection_config.URI)
 
         return None
 

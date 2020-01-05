@@ -1,6 +1,5 @@
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import MetaData
 from src.dto import connection_config
 
 
@@ -12,14 +11,12 @@ app = Flask(__name__)
 # }
 #
 # db = SQLAlchemy(app)
-metadata = MetaData()
 
-# TODO: Class for connections, multiple databases
+
 class Connection:
     @staticmethod
-    def create_connection(connection, binds):
+    def create_connection(connection):
         app.config['SQLALCHEMY_DATABASE_URI'] = connection
-        app.config['SQLALCHEMY_BINDS'] = binds
         return SQLAlchemy(app)
 
 

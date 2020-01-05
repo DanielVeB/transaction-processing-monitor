@@ -126,6 +126,7 @@ class AddRepository(Resource):
         resources = []
         for resource in data:
             resources.append(DpResource(
+                # TODO type=resource.get('type'),
                 host=resource.get('host'),
                 port=resource.get('port'),
                 user=resource.get('user'),
