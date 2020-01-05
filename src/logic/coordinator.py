@@ -7,7 +7,7 @@ from src.dto.resource import DpResource
 from src.logic.commands import Command
 from src.logic.interface_unit_of_work import IUnitOfWork
 from src.logic.transactions import DeleteAction, InsertAction, RestoreAction
-from src.repository.repos import TestRepository
+from src.repository.repo_factory import RepoFactory
 
 
 class Coordinator(IUnitOfWork):
@@ -62,8 +62,8 @@ class Coordinator(IUnitOfWork):
         for repo in self.repository_dict.values():
             repo.data_base_connection.session.clear()
 
-    def add_repository(self, connection):
-        repo = TestRepository(connection)
+    def add_repository(self, repo_type):
+        repo = RepoFactory.getRepo(repo_type)
         repo_uuid = uuid.UUID
         self.logger.info("Adding repository %s to repository list", repo.__name__)
         self.repository_dict[repo_uuid] = repo
