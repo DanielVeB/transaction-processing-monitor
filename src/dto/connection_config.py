@@ -5,10 +5,7 @@ DATABASE_NAME = "test"
 USERNAME = "root"
 PASSWORD = "root"
 
-
-URI = USERNAME + ":" + PASSWORD + "@" + DATABASE_URI + PORT + "/" + DATABASE_NAME
-DEFAULT_TYPE = "mysql://"
-OPTIONAL_TYPES = {
-    "postgres": "postgresql://",
-    "oracle": "oracle://"
-}
+# TODO: takie przechowywanie URI jest slabe ale to na koncu sie zajme zeby to do jakiegos slownika wrzucic czy cos
+MYSQL_URI = "mysql://" + USERNAME + ":" + PASSWORD + "@" + DATABASE_URI + PORT + "/" + DATABASE_NAME
+POSTGRES_URI = "postgresql://" + USERNAME + ":" + PASSWORD + "@" + DATABASE_URI + PORT + "/" + DATABASE_NAME
+ORACLE_URI = "oracle://" + USERNAME + ":" + PASSWORD + "@" + DATABASE_URI + PORT + "/" + DATABASE_NAME
