@@ -7,8 +7,8 @@ verify_ssl = true
 
 [packages]
 flask = "*"
-swagger = "*"
-lark-parser = "*"
+requests = "*"
+sqlalchemy= "*"
 
 [requires]
 python_version = "3.7"
