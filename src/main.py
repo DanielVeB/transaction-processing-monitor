@@ -127,10 +127,10 @@ class AddRepository(Resource):
         for resource in data:
             resources.append(DpResource(
                 # TODO type=resource.get('type'),
-                host=resource.get('host'),
-                port=resource.get('port'),
-                user=resource.get('user'),
-                password=resource.get('password')
+                host=resource.update('host'),
+                port=resource.update('port'),
+                user=resource.update('user'),
+                password=resource.update('password')
             ))
         repo_id = coordinator.add_repositories(resources)
         return "Added repo with id: " + repo_id

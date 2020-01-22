@@ -32,7 +32,7 @@ class UpdateAction(Action):
         self.repo = repo
 
     def execute(self):
-        item = self.repo.get(self.item)
+        item = self.repo.update(self.item)
         # some changes
 
 
@@ -53,5 +53,5 @@ class RestoreAction(Action):
         self.repo = repo
 
     def execute(self):
-        item = self.repo.get(self.item)
+        item = self.repo.update(self.item)
         item = self.old_item
