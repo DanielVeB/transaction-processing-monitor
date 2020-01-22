@@ -3,22 +3,30 @@ from uuid import UUID
 
 
 @dataclass
+class DP_Repository:
+    host: str
+    port: str
+    endpoints: []
+
+
+@dataclass
 class DP_Transaction:
-    id : UUID
-    statements : []
+    id: UUID
+    statements: []
 
     def toString(self):
         return "Database with id" + str(self.id) + "statements: " + str(self.statements)
 
+
 @dataclass
 class DP_Statement:
     # INSERT, UPDATE or DELETE
-    method : str
-    table_name : str
+    method: str
+    table_name: str
     # field_name : value
-    values : {}
+    values: {}
     # SQL statement
-    where : str = None
+    where: str = None
 
     def toSQL(self):
         result = ""
@@ -28,8 +36,8 @@ class DP_Statement:
             keys = ','.join(self.values.keys())
             values = list(self.values.values())
             result = self.method + " INTO " + self.table_name + "(" + keys + ")" + " VALUES "
-            for i in range(0,len(values)):
-                if isinstance(values[i],int):
+            for i in range(0, len(values)):
+                if isinstance(values[i], int):
                     result += str(values[i]) + ","
                 else:
                     result += "'" + values[i] + "',"
@@ -54,6 +62,6 @@ class DP_Statement:
         else:
             keys = ','.join(self.values.keys())
             result = "DELETE FROM " + self.table_name + " WHERE " + self.where
-            select = "SELECT " + keys +  " FROM " + self.table_name
+            select = "SELECT " + keys + " FROM " + self.table_name
 
-        return result,select
+        return result, select
