@@ -1,14 +1,9 @@
 import logging
 import uuid as uuid
 
-from flask import jsonify
-
 from src.dto.resource import DpResource
-from src.logic.commands import Command
 from src.logic.interface_unit_of_work import IUnitOfWork
-from src.logic.transactions import DeleteAction, InsertAction, RestoreAction
-from src.library.repo_factory import RepoFactory
-
+from src.logic.commands import Command
 
 class Coordinator(IUnitOfWork):
     logger = logging.getLogger(__name__)
@@ -16,24 +11,33 @@ class Coordinator(IUnitOfWork):
     def __init__(self):
         self.repository_dict = dict()
         self._committed_repository_list = []
-        self._changes_list = []
+        self._changed_repository_list = []
+        self._transaction_list = []
 
     def get_all_repositories(self):
         return self.repository_dict
 
-    def add_repositories(self, repositories: [DpResource]):
+    def add_repository(self, repositories: [DpResource]):
         id = str(uuid.uuid1())
         for repo in repositories:
             self.repository_dict[id] = repo
         return id
 
     def delete_repository(self, repo_uuid):
-        self.logger.info("Removing repository %s from repository list", repo_uuid)
-        return self.repository_dict.pop(repo_uuid, None)
+        self.logger.info("Removing repository %s from repository dict", repo_uuid)
+        try:
+            return self.repository_dict.pop(repo_uuid, None)
+        except KeyError:
+            self.logger.warning("Repository %s not found", repo_uuid)
+            return None
 
     def get_repository(self, repo_uuid):
-        self.logger.info("Get repository %s from repository list", repo_uuid)
-        return self.repository_dict.get(repo_uuid, None)
+        self.logger.info("Get repository %s from repository dict", repo_uuid)
+        try:
+            return self.repository_dict.get(repo_uuid, None)
+        except KeyError:
+            self.logger.warning("Repository %s not found", repo_uuid)
+            return None
 
     def commit(self):
         self.logger.info("Committing changes")
@@ -42,37 +46,30 @@ class Coordinator(IUnitOfWork):
                 repo.data_base_connection.session.commit()
                 self._committed_repository_list.append(repo.data_base_connection)
             except:
-                self.rollback()
+                self._rollback()
         self._committed_repository_list.clear()
-        self._changes_list.clear()
 
-    def rollback(self):
+    def _rollback(self):
         self.logger.warning("Rolling back changes")
-        for repo, change in self._committed_repository_list, self._changes_list:
-            if repo is change.repo:
-                if change.command == Command.INSERT:
-                    DeleteAction(change.item, change.repo).execute()
-                elif change.command == Command.DELETE:
-                    InsertAction(change.item, change.repo).execute()
+        for repo in self._changed_repository_list:
+            repo.rollback()
+
+        for repo in self._committed_repository_list:
+            # TODO: revert transaction
+            pass
+
+    def execute_transaction(self):
+        for transaction in self._transaction_list:
+            try:
+                repository = self.repository_dict[transaction.id]
+                repository.begin_transaction()
+                if transaction.statment[0] == Command.INSERT:
+                    repository.insert(transaction.table, transaction.statment[1])
+                elif transaction.statment[0] == Command.DELETE:
+                    repository.delete(transaction.table, transaction.statment[1])
                 else:
-                    RestoreAction(change.item, change.old_item, change.repo).execute()
-            repo.data_base_connection.session.commit()
-
-        for repo in self.repository_dict.values():
-            repo.data_base_connection.session.clear()
-
-    def add_repository(self, repo_type):
-        repo = RepoFactory.create_repository(repo_type)
-        repo_uuid = uuid.UUID
-        self.logger.info("Adding repository %s to repository list", repo.__name__)
-        self.repository_dict[repo_uuid] = repo
-        return jsonify(repo_uuid)
-
-    def execute_command(self, action, repo_uuid):
-        if repo_uuid in self.repository_dict:
-            repo = self.repository_dict.get(repo_uuid)
-            self.logger.info("Executing command for %s repository", repo.__name__)
-            action.execute()
-            self._changes_list.append((repo_uuid, action))
-        else:
-            self.logger.exception("Repo %s not found in repository list", repo_uuid)
+                    repository.update(transaction.table, transaction.statment)
+                self._changed_repository_list.append(repository)
+            except KeyError:
+                self.logger.error("Repository %s not found!", transaction.id)
+                self._rollback()

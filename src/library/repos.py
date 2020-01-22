@@ -34,12 +34,16 @@ class Repository(IRepository):
         return self.database_connection.execute(stmt)
 
     def rollback(self):
-        self.logger.info("Performing rollback")
-        return self.database_connection.execute("ROLLBACK")
+        self.logger.warning("Performing transaction rollback")
+        return self.database_connection.execute(text("ROLLBACK"))
 
     def commit(self):
-        self.logger.info("Performing commit")
-        return self.database_connection.execute("COMMIT")
+        self.logger.info("Performing transaction commit")
+        return self.database_connection.execute(text("COMMIT"))
+
+    def begin_transaction(self):
+        self.logger.info("Starting transaction")
+        return self.database_connection.execute(text("BEGIN"))
 
     def _send_old_row_to_coordinator(self, table, conditions):
         stmt = text("SELECT * FROM :table WHERE :where")
