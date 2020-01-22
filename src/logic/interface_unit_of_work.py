@@ -13,4 +13,4 @@ class IUnitOfWork(ABC):
     def commit(self): raise NotImplementedError
 
     @abstractmethod
-    def rollback(self): raise NotImplementedError
+    def _rollback(self): raise NotImplementedError

@@ -22,6 +22,6 @@ class UnitOfWork(IUnitOfWork):
         self.logger.info("Commit all changes")
         print("commit")
 
-    def rollback(self):
+    def _rollback(self):
         self.logger.error("Rollback of all objects started")
         print("rollback")
