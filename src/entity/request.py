@@ -1,5 +1,14 @@
 from dataclasses import dataclass
+from uuid import UUID
 
+
+@dataclass
+class DP_Transaction:
+    id : UUID
+    statements : []
+
+    def toString(self):
+        return "Database with id" + str(self.id) + "statements: " + str(self.statements)
 
 @dataclass
 class DP_Statement:
