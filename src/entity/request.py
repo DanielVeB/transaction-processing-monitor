@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from uuid import UUID
 
 
@@ -24,7 +24,7 @@ class DP_Statement:
     method: str
     table_name: str
     # field_name : value
-    values: {}
+    values: {} = field(default_factory=dict)
     # SQL statement
     where: str = None
 
