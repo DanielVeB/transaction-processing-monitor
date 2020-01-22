@@ -9,7 +9,7 @@ class TestDP_Statement(TestCase):
                             table_name="myTable",
                             values= {"name": "testName","second_name": "xd", "age": 21}
                             )
-        self.assertEqual(test.toSQL(), "INSERT INTO myTable(name, second_name,age) VALUES 'testName','xd',21")
+        self.assertEqual(test.toSQL(), "INSERT INTO myTable(name,second_name,age) VALUES 'testName','xd',21")
 
     def test_update(self):
         test = DP_Statement(method="UPDATE",
