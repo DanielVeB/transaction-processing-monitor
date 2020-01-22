@@ -13,6 +13,7 @@ class DP_Statement:
 
     def toSQL(self):
         result = ""
+        select = ""
 
         if self.method == "INSERT":
             keys = ','.join(self.values.keys())
@@ -39,7 +40,11 @@ class DP_Statement:
             result = result[:-1]
             if self.where != None:
                 result += " WHERE " + self.where
-
+            keys = ','.join(self.values.keys())
+            select = "SELECT " + keys + " FROM " + self.table_name
         else:
+            keys = ','.join(self.values.keys())
             result = "DELETE FROM " + self.table_name + " WHERE " + self.where
-        return result
+            select = "SELECT " + keys +  " FROM " + self.table_name
+
+        return result,select

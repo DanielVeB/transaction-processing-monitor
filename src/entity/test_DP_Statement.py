@@ -9,7 +9,7 @@ class TestDP_Statement(TestCase):
                             table_name="myTable",
                             values= {"name": "testName","second_name": "xd", "age": 21}
                             )
-        self.assertEqual(test.toSQL(), "INSERT INTO myTable(name,second_name,age) VALUES 'testName','xd',21")
+        self.assertEqual(test.toSQL()[0], "INSERT INTO myTable(name,second_name,age) VALUES 'testName','xd',21")
 
     def test_update(self):
         test = DP_Statement(method="UPDATE",
@@ -17,4 +17,4 @@ class TestDP_Statement(TestCase):
                             values={"age": 21},
                             where= "age < 40"
                             )
-        self.assertEqual(test.toSQL(), "UPDATE myTable SET age = 21 WHERE age < 40")
+        self.assertEqual(test.toSQL()[0], "UPDATE myTable SET age = 21 WHERE age < 40")
