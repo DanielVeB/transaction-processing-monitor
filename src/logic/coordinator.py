@@ -3,31 +3,40 @@ import uuid as uuid
 from dataclasses import dataclass
 
 import requests
+from flask import jsonify
 
 from src.entity.request import DP_Repository
-from src.library.repos import QueryException
 from src.logic.interface_unit_of_work import IUnitOfWork
 
 
-@dataclass
-class WebService:
-    _url: str
-    _send_transaction_endpoint: str
-    _commit_endpoint: str
-    _rollback_endpoint: str
+class QueryException(Exception):
+    def __init__(self):
+        Exception.__init__(self)
 
-    def send_transaction(self, transaction):
-        return requests.post(self._url + self._send_transaction_endpoint, json=transaction)
 
-    def commit(self):
-        return requests.post(self._url + self._commit_endpoint)
-
-    def rollback(self):
-        return requests.post(self._url + self._rollback_endpoint)
+class CommitException(Exception):
+    def __init__(self):
+        Exception.__init__(self)
 
 
 class Coordinator(IUnitOfWork):
     logger = logging.getLogger(__name__)
+
+    @dataclass
+    class _WebService:
+        _url: str
+        _send_transaction_endpoint: str
+        _commit_endpoint: str
+        _rollback_endpoint: str
+
+        def send_transaction(self, transaction):
+            return requests.post(self._url + self._send_transaction_endpoint, json=transaction)
+
+        def commit(self):
+            return requests.post(self._url + self._commit_endpoint)
+
+        def rollback(self):
+            return requests.post(self._url + self._rollback_endpoint)
 
     def __init__(self):
         self.webservices_dict = dict()  # DP_Repository
@@ -47,8 +56,8 @@ class Coordinator(IUnitOfWork):
         commit_endpoint = webservice_data.endpoints[1]
         rollback_endpoint = webservice_data.endpoints[2]
 
-        self.webservices_dict[webservice_id] = WebService(url, send_transaction_endpoint, commit_endpoint,
-                                                          rollback_endpoint)
+        self.webservices_dict[webservice_id] = self._WebService(url, send_transaction_endpoint, commit_endpoint,
+                                                                rollback_endpoint)
         return webservice_id
 
     def delete_repository(self, repo_uuid):
@@ -76,10 +85,13 @@ class Coordinator(IUnitOfWork):
                 webservice = self.webservices_dict[transaction.repository_id]
                 self._changed_repository_id_list.append(transaction.repository_id)
                 self._send_transactions_dict[transaction.repository_id] = transaction.statments
-                for statement in transaction.statments:
-                    result = webservice.send_transaction(statement)
+                result = webservice.send_transaction(transaction)
+                if result.status_code == 200:
+                    raise QueryException
+                else:
+                    self._old_data_dict[transaction.repository_id] = result.json()
             except (KeyError, QueryException) as ex:
-                self.logger.error("Repository %s not found!", transaction.repository_id)
+                self.logger.error("Error executing query!")
                 self.logger.exception(ex.message)
                 self._rollback()
 
@@ -88,18 +100,21 @@ class Coordinator(IUnitOfWork):
         for repo_id in self._changed_repository_id_list:
             try:
                 webservice = self.webservices_dict[repo_id]
-                webservice.commit()
+                result = webservice.commit()
+                if result.status_code == 200:
+                    raise CommitException
                 self._committed_repository_id_list.append(repo_id)
                 self._changed_repository_id_list.remove(repo_id)
-            except:
-                self.logger.error("Transaction failed!")
+            except CommitException:
+                self.logger.error("Commit failed!")
                 self._rollback()
-                break
+                return jsonify(error="Commit error!")
 
         self._committed_repository_id_list.clear()
         self._changed_repository_id_list.clear()
         self._transaction_list.clear()
         self._send_transactions_dict.clear()
+        return jsonify(status="Success")
 
     def _rollback(self):
         self.logger.warning("Rolling back changes")
@@ -116,6 +131,7 @@ class Coordinator(IUnitOfWork):
             for transaction in transactions:
                 webservice.send_transaction(transaction)
             webservice.commit()
+
         self._committed_repository_id_list.clear()
         self._changed_repository_id_list.clear()
         self._transaction_list.clear()

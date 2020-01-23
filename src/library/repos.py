@@ -6,13 +6,6 @@ from sqlalchemy import text
 from src.library.interface_repository import IRepository
 
 
-class QueryException(Exception):
-
-    def __init__(self):
-        Exception.__init__(self)
-        self.message = "Error while executing query!"
-
-
 class Repository(IRepository):
     logger = logging.getLogger(__name__)
 
@@ -42,18 +35,20 @@ class Repository(IRepository):
         return self.database_connection.execute(stmt)
 
     def execute_statement(self, statement):
-        try:
-            if statement.method == "INSERT":
-                table, values = statement.toSQL()
-                self._insert(table, values)
-            elif statement.method == "DELETE":
-                table, condition = statement.toSQL()
-                self._delete(table, condition)
-            else:
-                table, values, condition = statement.toSQL()
-                self._update(table, values, condition)
-        except:
-            raise QueryException
+        for transaction in statement.statements():
+            try:
+                if transaction.method == "INSERT":
+                    table, values = transaction.toSQL()
+                    self._insert(table, values)
+                elif transaction.method == "DELETE":
+                    table, condition = transaction.toSQL()
+                    self._delete(table, condition)
+                else:
+                    table, values, condition = transaction.toSQL()
+                    self._update(table, values, condition)
+            except:
+                # code to be returned
+                return
 
     def rollback(self):
         self.logger.warning("Performing transaction rollback")
