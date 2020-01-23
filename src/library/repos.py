@@ -1,3 +1,4 @@
+import json
 import logging
 
 import requests
@@ -78,6 +79,7 @@ class Repository(IRepository):
             element = {"method": transaction.method, "table_name": transaction.table_name, "values": values,
                        "where": transaction.where}
             result = {"statements": [element]}
+            result = json.dump(result)
             return result
 
         val = []
@@ -87,4 +89,5 @@ class Repository(IRepository):
         element = {"method": transaction.method, "table_name": transaction.table_name, "values": val,
                    "where": transaction.where}
         result = {"statements": [element]}
+        result = json.dump(result)
         return result
