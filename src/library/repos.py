@@ -42,13 +42,13 @@ class Repository(IRepository):
                     table, values = transaction.toSQL()
                     self._insert(table, values)
                 elif transaction.method == "DELETE":
-                    table, condition = transaction.toSQL()
-                    self._delete(table, condition)
-                    result = self.createJSON(transaction, condition)
+                    table, values = transaction.toSQL()
+                    self._delete(table, transaction.where)
+                    result = self.createJSON(transaction)
                 else:
-                    table, values, condition = transaction.toSQL()
-                    self._update(table, values, condition)
-                    result = self.createJSON(transaction, condition, values)
+                    table, values = transaction.toSQL()
+                    self._update(table, values, transaction.where)
+                    result = self.createJSON(transaction, values)
             except:
                 # code to be returned
                 return result
@@ -73,10 +73,10 @@ class Repository(IRepository):
         res = requests.post('http://localhost:5000/tests/endpoint', json=old_row)
         return res.status_code
 
-    def createJSON(self, transaction, condition, values={}):
+    def createJSON(self, transaction, values={}):
         if len(values) == 0:
             element = {"method": transaction.method, "table_name": transaction.table_name, "values": values,
-                       "where": condition}
+                       "where": transaction.where}
             result = {"statements": [element]}
             return result
 
@@ -85,6 +85,6 @@ class Repository(IRepository):
         for i in range(0, len(name_of_values)):
             val.append(name_of_values[i] + ":" + values[i])
         element = {"method": transaction.method, "table_name": transaction.table_name, "values": val,
-                   "where": condition}
+                   "where": transaction.where}
         result = {"statements": [element]}
         return result
