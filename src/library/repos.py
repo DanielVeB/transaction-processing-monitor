@@ -6,6 +6,13 @@ from sqlalchemy import text
 from src.library.interface_repository import IRepository
 
 
+class QueryException(Exception):
+
+    def __init__(self):
+        Exception.__init__(self)
+        self.message = "Error while executing query!"
+
+
 class Repository(IRepository):
     logger = logging.getLogger(__name__)
 
@@ -35,15 +42,18 @@ class Repository(IRepository):
         return self.database_connection.execute(stmt)
 
     def execute_statement(self, statement):
-        if statement.method == "INSERT":
-            table, values = statement.toSQL()
-            self._insert(table, values)
-        elif statement.method == "DELETE":
-            table, condition = statement.toSQL()
-            self._delete(table, condition)
-        else:
-            table, values, condition = statement.toSQL()
-            self._update(table, values, condition)
+        try:
+            if statement.method == "INSERT":
+                table, values = statement.toSQL()
+                self._insert(table, values)
+            elif statement.method == "DELETE":
+                table, condition = statement.toSQL()
+                self._delete(table, condition)
+            else:
+                table, values, condition = statement.toSQL()
+                self._update(table, values, condition)
+        except:
+            raise QueryException
 
     def rollback(self):
         self.logger.warning("Performing transaction rollback")
@@ -61,6 +71,6 @@ class Repository(IRepository):
         stmt = text("SELECT * FROM :table WHERE :where")
         stmt = stmt.bindparams(table=table, where=conditions)
         old_row = self.database_connection.execute(stmt)
-        # TODO: Change to cooridnator endpoint
+        # TODO: Change to cooridnator endpoint and parse select statement
         res = requests.post('http://localhost:5000/tests/endpoint', json=old_row)
         return res.status_code

@@ -2,6 +2,7 @@ import logging
 import uuid as uuid
 
 from src.dto.resource import DpResource
+from src.library.repos import QueryException
 from src.logic.interface_unit_of_work import IUnitOfWork
 
 
@@ -89,8 +90,9 @@ class Coordinator(IUnitOfWork):
                 self._send_transactions_dict[transaction.id] = transaction.statments
                 for statement in transaction.statments:
                     repository.execute_statement(statement)
-            except KeyError:
+            except (KeyError, QueryException) as ex:
                 self.logger.error("Repository %s not found!", transaction.id)
+                self.logger.exception(ex.message)
                 self._rollback()
 
     @staticmethod
