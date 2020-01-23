@@ -50,6 +50,7 @@ def get_where(statement):
 
 
 # Transaction
+# ============================================================
 @app.route('/dp/transaction', methods=['GET', 'POST'])
 def transaction():
     if request.method == 'POST':
@@ -76,6 +77,20 @@ def transaction():
     else:
         return "TODO"
 
+
+# Repository
+# =================================================
+@app.route('/dp/resources', methods=['POST'])
+def add_repo():
+    pass
+
+
+@app.route('/dp/resources<id>', methods=['GET', 'DELETE'])
+def specific_repo(id: str):
+    if request.method == 'GET':
+        coordinator.get_repository(id)
+    elif request.method == 'DELETE':
+        coordinator.delete_repository(id)
 
 
 if __name__ == '__main__':
