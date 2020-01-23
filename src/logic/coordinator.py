@@ -39,7 +39,7 @@ class Coordinator(IUnitOfWork):
             return requests.post(self._url + self._rollback_endpoint)
 
     def __init__(self):
-        self.webservices_dict = dict()  # DP_Repository
+        self.webservices_dict = dict()
         self._committed_repository_id_list = []
         self._changed_repository_id_list = []
         self._transaction_list = []
