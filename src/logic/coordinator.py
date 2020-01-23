@@ -24,6 +24,7 @@ class Coordinator(IUnitOfWork):
         id = str(uuid.uuid1())
         for repo in repositories:
             self.repository_dict[id] = repo
+            repo.connect_to_db()
         return id
 
     def delete_repository(self, repo_uuid):
