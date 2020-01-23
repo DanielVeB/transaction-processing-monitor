@@ -1,11 +1,29 @@
 import logging
 import uuid as uuid
+from dataclasses import dataclass
 
 import requests
 
-from src.dto.resource import DpResource
+from src.entity.request import DP_Repository
 from src.library.repos import QueryException
 from src.logic.interface_unit_of_work import IUnitOfWork
+
+
+@dataclass
+class WebService:
+    _url: str
+    _send_transaction_endpoint: str
+    _commit_endpoint: str
+    _rollback_endpoint: str
+
+    def send_transaction(self, transaction):
+        return requests.post(self._url + self._send_transaction_endpoint, json=transaction)
+
+    def commit(self):
+        return requests.post(self._url + self._commit_endpoint)
+
+    def rollback(self):
+        return requests.post(self._url + self._rollback_endpoint)
 
 
 class Coordinator(IUnitOfWork):
@@ -22,12 +40,16 @@ class Coordinator(IUnitOfWork):
     def get_all_repositories(self):
         return self.webservices_dict
 
-    def add_repository(self, repositories: [DpResource]):
-        id = str(uuid.uuid1())
-        for repo in repositories:
-            self.webservices_dict[id] = repo
-            repo.connect_to_db()
-        return id
+    def add_repository(self, webservice_data: DP_Repository):
+        webservice_id = str(uuid.uuid1())
+        url = "http:/" + webservice_data.host + ":" + webservice_data.port
+        send_transaction_endpoint = webservice_data.endpoints[0]
+        commit_endpoint = webservice_data.endpoints[1]
+        rollback_endpoint = webservice_data.endpoints[2]
+
+        self.webservices_dict[webservice_id] = WebService(url, send_transaction_endpoint, commit_endpoint,
+                                                          rollback_endpoint)
+        return webservice_id
 
     def delete_repository(self, repo_uuid):
         self.logger.info("Removing repository %s from repository dict", repo_uuid)
@@ -51,15 +73,13 @@ class Coordinator(IUnitOfWork):
     def execute_transaction(self):
         for transaction in self._transaction_list:
             try:
-                webservice = self.webservices_dict[transaction.id]
-                self._changed_repository_id_list.append(transaction.id)
-                self._send_transactions_dict[transaction.id] = transaction.statments
-                endpoint = webservice.endpoints[0]
-                url = webservice.hsot + ":" + webservice.port + endpoint
+                webservice = self.webservices_dict[transaction.repository_id]
+                self._changed_repository_id_list.append(transaction.repository_id)
+                self._send_transactions_dict[transaction.repository_id] = transaction.statments
                 for statement in transaction.statments:
-                    result = requests.post("http://" + url, json=statement)
+                    result = webservice.send_transaction(statement)
             except (KeyError, QueryException) as ex:
-                self.logger.error("Repository %s not found!", transaction.id)
+                self.logger.error("Repository %s not found!", transaction.repository_id)
                 self.logger.exception(ex.message)
                 self._rollback()
 
@@ -68,9 +88,7 @@ class Coordinator(IUnitOfWork):
         for repo_id in self._changed_repository_id_list:
             try:
                 webservice = self.webservices_dict[repo_id]
-                endpoint = webservice.endpoints[1]
-                url = webservice.hsot + ":" + webservice.port + endpoint
-                requests.post("http://" + url)
+                webservice.commit()
                 self._committed_repository_id_list.append(repo_id)
                 self._changed_repository_id_list.remove(repo_id)
             except:
@@ -87,25 +105,17 @@ class Coordinator(IUnitOfWork):
         self.logger.warning("Rolling back changes")
         for repo_id in self._changed_repository_id_list:
             webservice = self.webservices_dict[repo_id]
-            endpoint = webservice.endpoints[2]
-            url = webservice.hsot + ":" + webservice.port + endpoint
-            requests.post("http://" + url)
+            webservice.rollback()
             self._send_transactions_dict.pop(repo_id)
 
         for repo_id in self._committed_repository_id_list:
-            committed_repository = self.webservices_dict[repo_id]
             transactions = self._send_transactions_dict[repo_id]
             self._reverse_transactions(transactions)
             webservice = self.webservices_dict[repo_id]
-            endpoint = webservice.endpoints[0]
-            url = webservice.hsot + ":" + webservice.port + endpoint
 
             for transaction in transactions:
-                requests.post("http://" + url, json=transaction)
-            endpoint = webservice.endpoints[1]
-            url = webservice.hsot + ":" + webservice.port + endpoint
-            requests.post("http://" + url)
-
+                webservice.send_transaction(transaction)
+            webservice.commit()
         self._committed_repository_id_list.clear()
         self._changed_repository_id_list.clear()
         self._transaction_list.clear()
