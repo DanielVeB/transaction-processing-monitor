@@ -1,0 +1,30 @@
+{
+  "id": "6c8289a1-454e-40cf-bb68-80e76fd9abdc",
+  "statements": [
+    {
+      "method": "INSERT",
+      "table_name": "nameTable",
+      "values": [
+        "name : 'name_value'",
+        "age : 32"
+      ]
+    },
+    {
+      "method": "INSERT",
+      "table_name": "otherTable",
+      "values": [
+        "key1 : 'val1'",
+        "key2 : 'val2'"
+      ]
+    },
+    {
+      "method": "UPDATE",
+      "table_name": "otherTable",
+      "values": [
+        "key1 : 'other_val1'",
+        "key2 : 'other_val2'"
+      ],
+      "where": "val2 IN ('a','b')"
+    }
+  ]
+}
