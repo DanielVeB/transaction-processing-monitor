@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from uuid import UUID
 
 
@@ -24,7 +24,7 @@ class DP_Statement:
     method: str
     table_name: str
     # field_name : value
-    values: {} = field(default_factory=dict)
+    values: {}
     # SQL statement
     where: str = None
 
@@ -42,7 +42,7 @@ class DP_Statement:
                 else:
                     result += "'" + values[i] + "',"
             result = result[:-1]
-            if self.where != None:
+            if self.where is not None:
                 result += " WHERE " + self.where
 
         elif self.method == "UPDATE":
@@ -55,7 +55,7 @@ class DP_Statement:
                 else:
                     result += keys[i] + " = '" + values[i] + "',"
             result = result[:-1]
-            if self.where != None:
+            if self.where is not None:
                 result += " WHERE " + self.where
             keys = ','.join(self.values.keys())
             select = "SELECT " + keys + " FROM " + self.table_name

@@ -3,13 +3,13 @@ from abc import abstractmethod, ABC
 
 class IRepository(ABC):
     @abstractmethod
-    def update(self, table, new_values): raise NotImplementedError
+    def _update(self, table, new_values, condition): raise NotImplementedError
 
     @abstractmethod
-    def insert(self, table, values): raise NotImplementedError
+    def _insert(self, table, values): raise NotImplementedError
 
     @abstractmethod
-    def delete(self, table, conditions): raise NotImplementedError
+    def _delete(self, table, condition): raise NotImplementedError
 
     @abstractmethod
     def commit(self): raise NotImplementedError
