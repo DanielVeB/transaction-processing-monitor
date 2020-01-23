@@ -77,5 +77,20 @@ def transaction():
         return "TODO"
 
 
+# Repository
+# =================================================
+@app.route('/dp/resources', methods=['POST'])
+def add_repo():
+    pass
+
+
+@app.route('/dp/resources<id>', methods=['GET', 'DELETE'])
+def specific_repo(id: str):
+    if request.method == 'GET':
+        coordinator.get_repository(id)
+    elif request.method == 'DELETE':
+        coordinator.delete_repository(id)
+
+
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
