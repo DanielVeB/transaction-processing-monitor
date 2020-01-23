@@ -1,6 +1,13 @@
-from dataclasses import dataclass
 from uuid import UUID
 
+from dataclasses import dataclass
+
+
+@dataclass
+class DP_Repository:
+    host: str
+    port: str
+    endpoints: []
 
 @dataclass
 class DP_Transaction:
@@ -9,6 +16,12 @@ class DP_Transaction:
 
     def toString(self):
         return "Database with id" + str(self.id) + "statements: " + str(self.statements)
+
+    def toStatments(self):
+        method = ""
+        table_name = ""
+        values = {}
+        where = ""
 
 @dataclass
 class DP_Statement:
