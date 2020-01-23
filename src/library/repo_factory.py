@@ -2,7 +2,7 @@ import logging
 
 from flask_sqlalchemy import SQLAlchemy
 
-from src.main import Repository
+from src.library.repos import Repository
 
 REPO_TYPES = {
     "mysql": "mysql://",
@@ -26,7 +26,8 @@ class RepoFactory:
     def __init__(self, app):
         self.app = app
 
-    def create_repository(self, database_type, connection_uri):
+    @staticmethod
+    def create_repository(database_type, connection_uri):
         database_type = database_type.lower()
         if database_type in REPO_TYPES:
             database_connection = Connection(database_type).create_connection(connection_uri, self.app)
