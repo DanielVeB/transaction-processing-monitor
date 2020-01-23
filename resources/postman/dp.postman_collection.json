@@ -1,0 +1,46 @@
+{
+	"info": {
+		"_postman_id": "b783aa1a-61b7-4fd7-a5a5-ae32118d71fa",
+		"name": "dp",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "add transaction",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "[\n\t{\n\t  \"repository_id\": \"6c8289a1-454e-40cf-bb68-80e76fd9abdc\",\n\t  \"statements\": [\n\t    {\n\t      \"method\": \"INSERT\",\n\t      \"table_name\": \"nameTable\",\n\t      \"values\": [\n\t        \"name : 'name_value'\",\n\t        \"age : 32\"\n\t      ]\n\t    },\n\t    {\n\t      \"method\": \"INSERT\",\n\t      \"table_name\": \"otherTable\",\n\t      \"values\": [\n\t        \"key1 : 'val1'\",\n\t        \"key2 : 'val2'\"\n\t      ]\n\t    },\n\t    {\n\t      \"method\": \"UPDATE\",\n\t      \"table_name\": \"otherTable\",\n\t      \"values\": [\n\t        \"key1 : 'other_val1'\",\n\t        \"key2 : 'other_val2'\"\n\t      ],\n\t      \"where\": \"val2 IN ('a','b')\"\n\t    }\n\t  ]\n\t},\n\t{\n\t  \"repository_id\": \"ads13bad-454e-40cf-bb68-80e76fd9abdc\",\n\t  \"statements\": [\n\t    {\n\t      \"method\": \"INSERT\",\n\t      \"table_name\": \"nameTable\",\n\t      \"values\": [\n\t        \"name : 'name_value'\",\n\t        \"age : 32\"\n\t      ]\n\t    }\n\t ]\n\t}\n]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/dp/transaction",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dp",
+						"transaction"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
