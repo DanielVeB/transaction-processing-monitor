@@ -22,6 +22,7 @@ class TestDP_Statement(TestCase):
     def test_toSQL_delete(self):
         test = DP_Statement(method="DELETE",
                             table_name="myTable",
+                            values={},
                             where="age < 40"
                             )
         self.assertEqual(test.toSQL()[0], "DELETE FROM myTable WHERE age < 40")
