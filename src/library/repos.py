@@ -36,6 +36,7 @@ class Repository(IRepository):
 
     def execute_statement(self, statement):
         for transaction in statement.statements():
+            result = None
             try:
                 if transaction.method == "INSERT":
                     table, values = transaction.toSQL()
@@ -43,12 +44,14 @@ class Repository(IRepository):
                 elif transaction.method == "DELETE":
                     table, condition = transaction.toSQL()
                     self._delete(table, condition)
+                    result = self.createJSON(transaction, condition)
                 else:
                     table, values, condition = transaction.toSQL()
                     self._update(table, values, condition)
+                    result = self.createJSON(transaction, condition, values)
             except:
                 # code to be returned
-                return
+                return result
 
     def rollback(self):
         self.logger.warning("Performing transaction rollback")
@@ -69,3 +72,19 @@ class Repository(IRepository):
         # TODO: Change to cooridnator endpoint and parse select statement
         res = requests.post('http://localhost:5000/tests/endpoint', json=old_row)
         return res.status_code
+
+    def createJSON(self, transaction, condition, values={}):
+        if len(values) == 0:
+            element = {"method": transaction.method, "table_name": transaction.table_name, "values": values,
+                       "where": condition}
+            result = {"statements": [element]}
+            return result
+
+        val = []
+        name_of_values = list(transaction.values.values())
+        for i in range(0, len(name_of_values)):
+            val.append(name_of_values[i] + ":" + values[i])
+        element = {"method": transaction.method, "table_name": transaction.table_name, "values": val,
+                   "where": condition}
+        result = {"statements": [element]}
+        return result
