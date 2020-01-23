@@ -11,11 +11,11 @@ class DP_Repository:
 
 @dataclass
 class DP_Transaction:
-    id: UUID
+    repository_id: UUID
     statements: []
 
     def toString(self):
-        return "Database with id" + str(self.id) + "statements: " + str(self.statements)
+        return "Database with id" + str(self.repository_id) + "statements: " + str(self.statements)
 
     def toStatments(self):
         method = ""
