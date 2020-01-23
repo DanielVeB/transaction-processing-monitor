@@ -36,11 +36,14 @@ class Repository(IRepository):
 
     def execute_statement(self, statement):
         if statement.method == "INSERT":
-            self._insert(statement.table, statement.values)
+            table, values = statement.toSQL()
+            self._insert(table, values)
         elif statement.method == "DELETE":
-            self._delete(statement.table, statement.where)
+            table, condition = statement.toSQL()
+            self._delete(table, condition)
         else:
-            self._update(statement.table, statement.values, statement.where)
+            table, values, condition = statement.toSQL()
+            self._update(table, values, condition)
 
     def rollback(self):
         self.logger.warning("Performing transaction rollback")

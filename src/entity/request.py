@@ -30,38 +30,28 @@ class DP_Statement:
 
     def toSQL(self):
         result = ""
-        select = ""
 
         if self.method == "INSERT":
             keys = ','.join(self.values.keys())
             values = list(self.values.values())
-            result = self.method + " INTO " + self.table_name + "(" + keys + ")" + " VALUES "
+            table = self.table_name + "(" + keys + ")"
             for i in range(0, len(values)):
                 if isinstance(values[i], int):
                     result += str(values[i]) + ","
                 else:
                     result += "'" + values[i] + "',"
             result = result[:-1]
-            if self.where is not None:
-                result += " WHERE " + self.where
+            return table, result
 
         elif self.method == "UPDATE":
             keys = list(self.values.keys())
             values = list(self.values.values())
-            result = self.method + " " + self.table_name + " SET "
             for i in range(0, len(values)):
                 if isinstance(values[i], int):
                     result += keys[i] + " = " + str(values[i]) + ","
                 else:
                     result += keys[i] + " = '" + values[i] + "',"
             result = result[:-1]
-            if self.where is not None:
-                result += " WHERE " + self.where
-            keys = ','.join(self.values.keys())
-            select = "SELECT " + keys + " FROM " + self.table_name
+            return self.table_name, result, self.where
         else:
-            keys = ','.join(self.values.keys())
-            result = "DELETE FROM " + self.table_name + " WHERE " + self.where
-            select = "SELECT " + keys + " FROM " + self.table_name
-
-        return result, select
+            return self.table_name, self.where
