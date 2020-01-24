@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 from uuid import UUID
+
+from dataclasses import dataclass
 
 
 @dataclass
@@ -16,12 +17,6 @@ class DP_Transaction:
 
     def toString(self):
         return "Database with id" + str(self.repository_id) + "statements: " + str(self.statements)
-
-    def toStatments(self):
-        method = ""
-        table_name = ""
-        values = {}
-        where = ""
 
 
 @dataclass
