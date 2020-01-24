@@ -91,7 +91,7 @@ class Coordinator(IUnitOfWork):
                 self._changed_repository_id_list.append(transaction.repository_id)
                 self._send_transactions_dict[transaction.repository_id] = transaction.statements
                 result = webservice.send_transaction(transaction.serialize())
-                self.app.logger.info("Sending request to: ", webservice._url)
+                self.app.logger.info("Sending request")
                 if result.status_code != 200:
                     raise QueryException
                 else:

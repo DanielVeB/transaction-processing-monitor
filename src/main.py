@@ -15,7 +15,7 @@ logging.basicConfig(level=logging.DEBUG,
 coordinator = Coordinator(app)
 
 coordinator.add_repository(
-    DP_Repository("localhost", "8081", ['/database/transaction', '/database/commmit', '/database/rollback']), "1")
+    DP_Repository("localhost", "9234", ['/database/transaction', '/database/commmit', '/database/rollback']), "1")
 
 
 class Invalid_ID(Exception):

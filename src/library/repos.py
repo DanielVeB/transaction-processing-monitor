@@ -10,7 +10,7 @@ class Repository(IRepository):
     logger = logging.getLogger(__name__)
 
     def __init__(self, database_connection, app):
-        self.database_connection = database_connection
+        self.database_connection = database_connection.engine
         self.app = app
 
     def _update(self, request):
