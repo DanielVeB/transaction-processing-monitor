@@ -86,9 +86,10 @@ class Coordinator(IUnitOfWork):
                 self._changed_repository_id_list.append(transaction.repository_id)
                 self._send_transactions_dict[transaction.repository_id] = transaction.statments
                 result = webservice.send_transaction(transaction)
-                if result.status_code == 200:
+                if result.status_code != 200:
                     raise QueryException
                 else:
+
                     self._old_data_dict[transaction.repository_id] = result.json()
             except (KeyError, QueryException) as ex:
                 self.logger.error("Error executing query!")
