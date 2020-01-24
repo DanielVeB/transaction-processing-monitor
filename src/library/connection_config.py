@@ -5,4 +5,10 @@ DATABASE_NAME = "test"
 USERNAME = "root"
 PASSWORD = "lukasz"
 
-URI = USERNAME + ":" + PASSWORD + "@" + DATABASE_URI + PORT + "/" + DATABASE_NAME
+REPO_TYPES = {
+    "mysql": "mysql://",
+    "postgres": "postgresql://",
+    "oracle": "oracle://"
+}
+
+URI = REPO_TYPES["mysql"] + USERNAME + ":" + PASSWORD + "@" + DATABASE_URI + PORT + "/" + DATABASE_NAME
