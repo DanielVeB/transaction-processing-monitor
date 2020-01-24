@@ -38,7 +38,8 @@ def get_values(statement):
         values_dict = {}
         values = statement['values']
         for value in values:
-            key, val = value.split(":")
+            key = value['key']
+            val = value['value']
             values_dict[key] = val
         return values_dict
     except:
