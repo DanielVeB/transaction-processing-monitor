@@ -12,14 +12,14 @@ logging.basicConfig(level=logging.DEBUG,
                     datefmt='%d-%b-%y %H:%M:%S')
 
 repoFactory = RepoFactory(app)
-webService = repoFactory.create_repository(URI)
+repository = repoFactory.create_repository(URI)
 
 
 # Transaction request
 @app.route('/database/transaction', methods=['POST'])
 def execute_transaction():
     transaction = request.get_json()
-    result = webService.execute_statement(transaction)
+    result = repository.execute_statement(transaction)
     return jsonify(result)
 
 # Commit
