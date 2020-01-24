@@ -1,3 +1,4 @@
+import json
 import logging
 
 from flask import Flask, request, jsonify
@@ -76,10 +77,10 @@ def transaction():
             )
             transactions.append(t)
         coordinator.set_transactions(transactions)
-        coordinator.execute_transaction()
-        return "Done"
+        # coordinator.execute_transaction()
+        return "Added succesfully"
     else:
-        return "TODO"
+        return json.dumps([t.serialize() for t in coordinator.get_transaction()])
 
 
 # Repository

@@ -1,6 +1,5 @@
-from uuid import UUID
-
 from dataclasses import dataclass
+from uuid import UUID
 
 
 @dataclass
@@ -17,6 +16,12 @@ class DP_Transaction:
 
     def toString(self):
         return "Database with id" + str(self.repository_id) + "statements: " + str(self.statements)
+
+    def serialize(self):
+        return {
+            "repository_id": self.repository_id,
+            "statements": ([s.serialize() for s in self.statements])
+        }
 
 
 @dataclass
@@ -66,3 +71,10 @@ class DP_Statement:
             select = "SELECT " + keys + " FROM " + self.table_name
 
         return result, select
+
+    def serialize(self):
+        return {
+            "method": self.method,
+            "table_name": self.table_name,
+            "values": ([{'key': k, 'value': v} for k, v in self.values.items()])
+        }

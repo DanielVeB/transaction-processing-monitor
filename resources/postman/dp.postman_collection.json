@@ -43,6 +43,18 @@
 		},
 		{
 			"name": "add repo",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "40b039c8-21a2-40ed-aa2c-665c2274cddd",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
 			"request": {
 				"method": "POST",
 				"header": [
@@ -89,7 +101,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://localhost:8080/dp/resources/86e89712-3e3f-11ea-9d46-3cf862672992",
+					"raw": "http://localhost:8080/dp/resources/{{resource_id}}",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -98,7 +110,27 @@
 					"path": [
 						"dp",
 						"resources",
-						"86e89712-3e3f-11ea-9d46-3cf862672992"
+						"{{resource_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get transaction",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/dp/transaction",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dp",
+						"transaction"
 					]
 				}
 			},

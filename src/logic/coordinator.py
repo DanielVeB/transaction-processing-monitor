@@ -77,7 +77,10 @@ class Coordinator(IUnitOfWork):
             return None
 
     def set_transactions(self, transactions):
-        self._transaction_list = transactions
+        self._transaction_list = transactions.copy()
+
+    def get_transaction(self):
+        return self._transaction_list
 
     def execute_transaction(self):
         for transaction in self._transaction_list:
