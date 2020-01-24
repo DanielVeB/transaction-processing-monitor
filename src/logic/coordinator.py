@@ -48,8 +48,9 @@ class Coordinator(IUnitOfWork):
     def get_all_repositories(self):
         return self.webservices_dict
 
-    def add_repository(self, webservice_data: DP_Repository):
-        webservice_id = str(uuid.uuid1())
+    def add_repository(self, webservice_data: DP_Repository, webservice_id=None):
+        if webservice_id is None:
+            webservice_id = str(uuid.uuid1())
         url = "http://" + webservice_data.host + ":" + webservice_data.port
         send_transaction_endpoint = webservice_data.endpoints[0]
         commit_endpoint = webservice_data.endpoints[1]
@@ -81,10 +82,12 @@ class Coordinator(IUnitOfWork):
     def execute_transaction(self):
         for transaction in self._transaction_list:
             try:
+                self.app.logger.info(self.webservices_dict)
                 webservice = self.webservices_dict[transaction.repository_id]
                 self._changed_repository_id_list.append(transaction.repository_id)
-                self._send_transactions_dict[transaction.repository_id] = transaction.statments
+                self._send_transactions_dict[transaction.repository_id] = transaction.statements
                 result = webservice.send_transaction(transaction)
+                self.app.logger.info("Sending request to: ", webservice._url)
                 if result.status_code != 200:
                     raise QueryException
                 else:
