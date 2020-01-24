@@ -1,6 +1,6 @@
 import logging
 
-from flask import Flask
+from flask import Flask, request, jsonify
 
 from src.library.connection_config import URI
 from src.library.repo_factory import RepoFactory
@@ -15,9 +15,12 @@ repoFactory = RepoFactory(app)
 testRepo = repoFactory.create_repository("mysql", URI)
 
 
-# Transaction
+# Transaction request
 @app.route('/database/transaction', methods=['POST'])
 def execute_transaction():
+    transaction = request.get_json()
+    result = testRepo.execute_statement(transaction)
+    return jsonify(result)
 
 
 if __name__ == '__main__':
