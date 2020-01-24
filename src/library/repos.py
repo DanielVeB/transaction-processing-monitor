@@ -69,19 +69,28 @@ class Repository(IRepository):
                 where += name_of_values[i] + "=" + values[0][i] + " AND "
             where = where[:-4]
             element = {"method": "DELETE", "table_name": transaction.table_name, "where": where}
-            result = json.dump(element)
+            result = json.dumps(element)
             return result
         elif type == "UPDATE":
-            val = []
+            updateLst = []
             name_of_values = list(transaction.values.values())
-            for i in range(0, len(name_of_values)):
-                val.append(name_of_values[i] + ":" + values[i])
-            element = {"method": transaction.method, "table_name": transaction.table_name, "values": val,
-                       "where": transaction.where}
-            result = json.dump(element)
+            for j in range(0, len(values)):
+                val = []
+                for i in range(0, len(name_of_values)):
+                    val.append(name_of_values[i] + ":" + values[j][i])
+                element = {"method": transaction.method, "table_name": transaction.table_name, "values": val,
+                           "where": transaction.where}
+                updateLst.append(element)
+            result = json.dumps(updateLst)
             return result
         else:
-            element = {"method": transaction.method, "table_name": transaction.table_name, "values": values,
-                       "where": transaction.where}
-            result = json.dump(element)
+            insertLst = []
+            name_of_values = list(transaction.values.values())
+            for j in range(0, len(values)):
+                val = []
+                for i in range(0, len(name_of_values)):
+                    val.append(name_of_values[i] + ":" + values[j][i])
+                element = {"method": "INSERT", "table_name": transaction.table_name, "values": values}
+                insertLst.append(element)
+            result = json.dumps(insertLst)
             return result
