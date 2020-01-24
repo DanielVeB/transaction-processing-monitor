@@ -135,6 +135,27 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "start transaction",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/dp/transaction/start",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dp",
+						"transaction",
+						"start"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"protocolProfileBehavior": {}

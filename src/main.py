@@ -77,11 +77,13 @@ def transaction():
             )
             transactions.append(t)
         coordinator.set_transactions(transactions)
-        coordinator.execute_transaction()
         return "Added succesfully"
     else:
         return json.dumps([t.serialize() for t in coordinator.get_transaction()])
 
+@app.route('/dp/transaction/start', methods=['GET'])
+def start_transaction():
+    return coordinator.execute_transaction()
 
 # Repository
 # =================================================
