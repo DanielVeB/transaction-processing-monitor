@@ -1,6 +1,4 @@
 from uuid import uuid1
-from src.library.repos import Repository
-from src.library.connection_config import URI
 
 
 class DpResource(object):
