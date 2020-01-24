@@ -52,7 +52,7 @@ class Repository(IRepository):
                     result.append(self.createJSON(transaction, "UPDATE", data_select))
                     self._update(table)
             except:
-                print("Error: transaction failed")
+                print("Error: transactions failed")
         result = {"statements": result}
         return result
 
