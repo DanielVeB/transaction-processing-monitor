@@ -34,16 +34,23 @@ class Repository(IRepository):
         for transaction in statement.statements():
             try:
                 if transaction.method == "INSERT":
-                    table, values = transaction.toSQL()
+                    table, select = transaction.toSQL()
+                    stmt = text(select)
+                    data_select = self.database_connection.execute(stmt)
+                    result.append(self.createJSON(transaction, "INSERT", data_select))
                     self._insert(table)
                 elif transaction.method == "DELETE":
-                    table, values = transaction.toSQL()
+                    table, select = transaction.toSQL()
+                    stmt = text(select)
+                    data_select = self.database_connection.execute(stmt)
+                    result.append(self.createJSON(transaction, "DELETE", data_select))
                     self._delete(table)
-                    result.append(self.createJSON(transaction))
                 else:
                     table, values = transaction.toSQL()
+                    stmt = text(select)
+                    data_select = self.database_connection.execute(stmt)
+                    result.append(self.createJSON(transaction, "UPDATE", data_select))
                     self._update(table)
-                    result.append(self.createJSON(transaction, values))
             except:
                 print("Error: transaction failed")
         result = {"statements": result}
