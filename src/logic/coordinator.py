@@ -89,7 +89,7 @@ class Coordinator(IUnitOfWork):
                 webservice = self.webservices_dict[transaction.repository_id]
                 self._changed_repository_id_list.append(transaction.repository_id)
                 self._send_transactions_dict[transaction.repository_id] = transaction.statements
-                result = webservice.send_transaction(transaction)
+                result = webservice.send_transaction(transaction.serialize())
                 self.app.logger.info("Sending request to: ", webservice._url)
                 if result.status_code != 200:
                     raise QueryException
@@ -131,7 +131,7 @@ class Coordinator(IUnitOfWork):
             webservice = self.webservices_dict[repo_id]
 
             for transaction in transactions:
-                webservice.send_transaction(transaction)
+                webservice.send_transaction(transaction.serialize())
             webservice.commit()
 
         self._committed_repository_id_list.clear()

@@ -77,7 +77,7 @@ def transaction():
             )
             transactions.append(t)
         coordinator.set_transactions(transactions)
-        # coordinator.execute_transaction()
+        coordinator.execute_transaction()
         return "Added succesfully"
     else:
         return json.dumps([t.serialize() for t in coordinator.get_transaction()])
