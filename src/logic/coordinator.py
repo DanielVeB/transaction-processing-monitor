@@ -83,6 +83,8 @@ class Coordinator(IUnitOfWork):
         return self._transaction_list
 
     def execute_transaction(self):
+        if len(self._transaction_list) == 0:
+            return "There's no transaction. Please add transaction before"
         for transaction in self._transaction_list:
             try:
                 self.app.logger.info(self.webservices_dict)
