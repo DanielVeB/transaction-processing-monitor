@@ -1,8 +1,8 @@
 import logging
 
-from flask import Flask, request
+from flask import Flask, request, jsonify
 
-from src.entity.request import DP_Transaction, DP_Statement
+from src.entity.request import DP_Transaction, DP_Statement, DP_Repository
 from src.logic.coordinator import Coordinator
 
 app = Flask(__name__)
@@ -81,15 +81,21 @@ def transaction():
 # =================================================
 @app.route('/dp/resources', methods=['POST'])
 def add_repo():
-    pass
+    content = request.get_json()
+    repo = DP_Repository(
+        host=content['host'],
+        port=content['port'],
+        endpoints=content['endpoints']
+    )
+    return coordinator.add_repository(repo)
 
 
-@app.route('/dp/resources<id>', methods=['GET', 'DELETE'])
+@app.route('/dp/resources/<id>', methods=['GET', 'DELETE'])
 def specific_repo(id: str):
     if request.method == 'GET':
-        coordinator.get_repository(id)
+        return jsonify(coordinator.get_repository(id))
     elif request.method == 'DELETE':
-        coordinator.delete_repository(id)
+        return jsonify(coordinator.delete_repository(id))
 
 
 if __name__ == '__main__':
