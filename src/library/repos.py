@@ -31,7 +31,7 @@ class Repository(IRepository):
     def execute_statement(self, statement):
         result = []
         self.begin_transaction()
-        for transaction in statement.statements():
+        for transaction in statement["statements"]:
             try:
                 if transaction.method == "INSERT":
                     table, select = transaction.toSQL()

@@ -28,7 +28,7 @@ class WebService(IWebService):
         return Repository(database_connection, db_app)
 
 
-uri = "postgres://localhost:k0fO5TZwnQrXFh7e8Q2lcJOZYjAgaT3g@rajje.db.elephantsql.com:3000/test"
+uri = "postgres://gmavcrpg:k0fO5TZwnQrXFh7e8Q2lcJOZYjAgaT3g@rajje.db.elephantsql.com:5432/gmavcrpg"
 webservice = WebService(uri)
 repository = webservice.create_repository(app)
 
