@@ -50,7 +50,7 @@ class Coordinator(IUnitOfWork):
 
     def add_repository(self, webservice_data: DP_Repository):
         webservice_id = str(uuid.uuid1())
-        url = "http:/" + webservice_data.host + ":" + webservice_data.port
+        url = "http://" + webservice_data.host + ":" + webservice_data.port
         send_transaction_endpoint = webservice_data.endpoints[0]
         commit_endpoint = webservice_data.endpoints[1]
         rollback_endpoint = webservice_data.endpoints[2]
