@@ -22,10 +22,18 @@ def execute_transaction():
     result = repository.execute_statement(transaction)
     return jsonify(result)
 
+# Should this methods have jsonify return?
 # Commit
 @app.route('/database/commmit', methods=['POST'])
 def commit():
-    pass
+    result = repository.commit()
+    return result
+
+# Rollback
+@app.route('/database/rollback', methods=['POST'])
+def rollback():
+    result = repository.rollback()
+    return result
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8080)
