@@ -19,7 +19,6 @@ class CommitException(Exception):
 
 
 class Coordinator(IUnitOfWork):
-
     @dataclass
     class _WebService:
         _url: str
@@ -100,6 +99,8 @@ class Coordinator(IUnitOfWork):
             except (KeyError, QueryException) as ex:
                 self.app.logger.error("Error executing query!")
                 self._rollback()
+                return "Transaction failed."
+        return "Transaction executed successfully"
 
     def commit(self):
         self.app.logger.info("Committing changes")
@@ -140,4 +141,3 @@ class Coordinator(IUnitOfWork):
         self._changed_repository_id_list.clear()
         self._transaction_list.clear()
         self._send_transactions_dict.clear()
-
