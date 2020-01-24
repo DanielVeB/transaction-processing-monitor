@@ -40,6 +40,69 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "add repo",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"host\" : \"localhost\",\n\t\"port\" : \"4132\",\n\t\"endpoints\" : [\n\t\t\"endpoint1\",\n\t\t\"endpoint2\",\n\t\t\"endpoint3\"\n\t\t]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8080/dp/resources",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dp",
+						"resources"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get repo",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "",
+						"value": "",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/dp/resources/86e89712-3e3f-11ea-9d46-3cf862672992",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"dp",
+						"resources",
+						"86e89712-3e3f-11ea-9d46-3cf862672992"
+					]
+				}
+			},
+			"response": []
 		}
 	],
 	"protocolProfileBehavior": {}

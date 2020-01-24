@@ -1,4 +1,3 @@
-import logging
 import uuid as uuid
 from dataclasses import dataclass
 
@@ -7,6 +6,7 @@ from flask import jsonify
 
 from src.entity.request import DP_Repository
 from src.logic.interface_unit_of_work import IUnitOfWork
+from src.main import app
 
 
 class QueryException(Exception):
@@ -20,7 +20,6 @@ class CommitException(Exception):
 
 
 class Coordinator(IUnitOfWork):
-    logger = logging.getLogger(__name__)
 
     @dataclass
     class _WebService:
@@ -44,7 +43,7 @@ class Coordinator(IUnitOfWork):
         self._changed_repository_id_list = []
         self._transaction_list = []
         self._send_transactions_dict = dict()
-        self._old_data_dict = {}
+        self._reverse_transaction_dict = {}
 
     def get_all_repositories(self):
         return self.webservices_dict
@@ -61,19 +60,19 @@ class Coordinator(IUnitOfWork):
         return webservice_id
 
     def delete_repository(self, repo_uuid):
-        self.logger.info("Removing repository %s from repository dict", repo_uuid)
+        app.logger.info("Removing repository %s from repository dict", repo_uuid)
         try:
             return self.webservices_dict.pop(repo_uuid, None)
         except KeyError:
-            self.logger.warning("Repository %s not found", repo_uuid)
+            app.logger.warning("Repository %s not found", repo_uuid)
             return None
 
     def get_repository(self, repo_uuid):
-        self.logger.info("Get repository %s from repository dict", repo_uuid)
+        app.logger.info("Get repository %s from repository dict", repo_uuid)
         try:
             return self.webservices_dict.get(repo_uuid, None)
         except KeyError:
-            self.logger.warning("Repository %s not found", repo_uuid)
+            app.logger.warning("Repository %s not found", repo_uuid)
             return None
 
     def set_transactions(self, transactions):
@@ -89,15 +88,13 @@ class Coordinator(IUnitOfWork):
                 if result.status_code != 200:
                     raise QueryException
                 else:
-
-                    self._old_data_dict[transaction.repository_id] = result.json()
+                    self._reverse_transaction_dict[transaction.repository_id] = result.json()
             except (KeyError, QueryException) as ex:
-                self.logger.error("Error executing query!")
-                self.logger.exception(ex.message)
+                app.logger.error("Error executing query!")
                 self._rollback()
 
     def commit(self):
-        self.logger.info("Committing changes")
+        app.logger.info("Committing changes")
         for repo_id in self._changed_repository_id_list:
             try:
                 webservice = self.webservices_dict[repo_id]
@@ -107,7 +104,7 @@ class Coordinator(IUnitOfWork):
                 self._committed_repository_id_list.append(repo_id)
                 self._changed_repository_id_list.remove(repo_id)
             except CommitException:
-                self.logger.error("Commit failed!")
+                app.logger.error("Commit failed!")
                 self._rollback()
                 return jsonify(error="Commit error!")
 
@@ -118,15 +115,13 @@ class Coordinator(IUnitOfWork):
         return jsonify(status="Success")
 
     def _rollback(self):
-        self.logger.warning("Rolling back changes")
+        app.logger.warning("Rolling back changes")
         for repo_id in self._changed_repository_id_list:
             webservice = self.webservices_dict[repo_id]
             webservice.rollback()
-            self._send_transactions_dict.pop(repo_id)
 
         for repo_id in self._committed_repository_id_list:
-            transactions = self._send_transactions_dict[repo_id]
-            self._reverse_transactions(transactions)
+            transactions = self._reverse_transaction_dict[repo_id]
             webservice = self.webservices_dict[repo_id]
 
             for transaction in transactions:
@@ -138,14 +133,3 @@ class Coordinator(IUnitOfWork):
         self._transaction_list.clear()
         self._send_transactions_dict.clear()
 
-    @staticmethod
-    def _reverse_transactions(transactions):
-        for transaction in transactions:
-            if transaction.method == "INSERT":
-                transaction.method = "DELETE"
-            elif transaction.method == "DELETE":
-                transaction.method = "INSERT"
-                # TODO: Change date for old ones based on self._old_data_list = []
-            else:
-                # TODO: Change date for update to old ones based on self._old_data_list = []
-                pass

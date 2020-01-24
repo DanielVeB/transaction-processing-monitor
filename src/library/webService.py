@@ -15,7 +15,7 @@ repoFactory = RepoFactory(app)
 webService = repoFactory.create_repository(URI)
 
 
-# Transaction
+# Transaction request
 @app.route('/database/transaction', methods=['POST'])
 def execute_transaction():
     transaction = request.get_json()
