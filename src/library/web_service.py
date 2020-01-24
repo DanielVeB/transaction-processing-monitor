@@ -6,30 +6,23 @@ from flask_sqlalchemy import SQLAlchemy
 from src.library.interface_web_service import IWebService
 from src.library.repos import Repository
 
-#app = Flask(__name__)
-
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
+app = Flask(__name__)
 
-# repoFactory = RepoFactory(app)
-# repository = repoFactory.create_repository(URI)
 
-# Is that even possible?
 class WebService(IWebService):
     logger = logging.getLogger(__name__)
-    app = Flask(__name__)
 
     def __init__(self, db_name, username, pwd, db_type="mysql", db_uri="localhost", port=":3306"):
         self.uri = db_type + "://" + username + ":" + pwd + "@" + db_uri + port + "/" + db_name
         self.repository = self.create_repository(self.uri)
 
-
     def create_repository(self, connection_uri):
-        self.app.config['SQLALCHEMY_DATABASE_URI'] = connection_uri
-        database_connection = SQLAlchemy(self.app)
-        return Repository(database_connection)
-
+        app.config['SQLALCHEMY_DATABASE_URI'] = connection_uri
+        database_connection = SQLAlchemy(app)
+        return Repository(database_connection, app)
 
     # Transaction request
     @app.route('/database/transaction', methods=['POST'])
@@ -51,5 +44,11 @@ class WebService(IWebService):
         result = self.repository.rollback()
         return result
 
-    if __name__ == '__main__':
-        app.run(host='0.0.0.0', port=8080)
+    @staticmethod
+    def run_web_service(port):
+        app.run(host='0.0.0.0', port=port)
+
+
+webservice = WebService("test", "root", "lukasz")
+if __name__ == '__main__':
+    webservice.run_web_service(8081)

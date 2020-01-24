@@ -6,7 +6,6 @@ from flask import jsonify
 
 from src.entity.request import DP_Repository
 from src.logic.interface_unit_of_work import IUnitOfWork
-from src.main import app
 
 
 class QueryException(Exception):
@@ -37,13 +36,14 @@ class Coordinator(IUnitOfWork):
         def rollback(self):
             return requests.post(self._url + self._rollback_endpoint)
 
-    def __init__(self):
+    def __init__(self, app):
         self.webservices_dict = dict()
         self._committed_repository_id_list = []
         self._changed_repository_id_list = []
         self._transaction_list = []
         self._send_transactions_dict = dict()
         self._reverse_transaction_dict = {}
+        self.app = app
 
     def get_all_repositories(self):
         return self.webservices_dict
@@ -60,19 +60,19 @@ class Coordinator(IUnitOfWork):
         return webservice_id
 
     def delete_repository(self, repo_uuid):
-        app.logger.info("Removing repository %s from repository dict", repo_uuid)
+        self.app.logger.info("Removing repository %s from repository dict", repo_uuid)
         try:
             return self.webservices_dict.pop(repo_uuid, None)
         except KeyError:
-            app.logger.warning("Repository %s not found", repo_uuid)
+            self.app.logger.warning("Repository %s not found", repo_uuid)
             return None
 
     def get_repository(self, repo_uuid):
-        app.logger.info("Get repository %s from repository dict", repo_uuid)
+        self.app.logger.info("Get repository %s from repository dict", repo_uuid)
         try:
             return self.webservices_dict.get(repo_uuid, None)
         except KeyError:
-            app.logger.warning("Repository %s not found", repo_uuid)
+            self.app.logger.warning("Repository %s not found", repo_uuid)
             return None
 
     def set_transactions(self, transactions):
@@ -90,21 +90,21 @@ class Coordinator(IUnitOfWork):
                 else:
                     self._reverse_transaction_dict[transaction.repository_id] = result.json()
             except (KeyError, QueryException) as ex:
-                app.logger.error("Error executing query!")
+                self.app.logger.error("Error executing query!")
                 self._rollback()
 
     def commit(self):
-        app.logger.info("Committing changes")
+        self.app.logger.info("Committing changes")
         for repo_id in self._changed_repository_id_list:
             try:
                 webservice = self.webservices_dict[repo_id]
                 result = webservice.commit()
-                if result.status_code == 200:
+                if result.status_code != 200:
                     raise CommitException
                 self._committed_repository_id_list.append(repo_id)
                 self._changed_repository_id_list.remove(repo_id)
             except CommitException:
-                app.logger.error("Commit failed!")
+                self.app.logger.error("Commit failed!")
                 self._rollback()
                 return jsonify(error="Commit error!")
 
@@ -115,7 +115,7 @@ class Coordinator(IUnitOfWork):
         return jsonify(status="Success")
 
     def _rollback(self):
-        app.logger.warning("Rolling back changes")
+        self.app.logger.warning("Rolling back changes")
         for repo_id in self._changed_repository_id_list:
             webservice = self.webservices_dict[repo_id]
             webservice.rollback()

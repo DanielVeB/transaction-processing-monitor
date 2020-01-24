@@ -2,7 +2,6 @@ import json
 import logging
 
 from sqlalchemy import text
-from src.library.main import app
 
 from src.library.interface_repository import IRepository
 
@@ -10,8 +9,9 @@ from src.library.interface_repository import IRepository
 class Repository(IRepository):
     logger = logging.getLogger(__name__)
 
-    def __init__(self, database_connection):
+    def __init__(self, database_connection, app):
         self.database_connection = database_connection
+        self.app = app
 
     def _update(self, request):
         self.logger.info("Updating row")
@@ -57,18 +57,20 @@ class Repository(IRepository):
         return result
 
     def rollback(self):
-        app.logger.warning("Performing transaction rollback")
+        self.app.logger.warning("Performing transaction rollback")
         return self.database_connection.execute(text("ROLLBACK"))
 
     def commit(self):
-        app.logger.info("Performing transaction commit")
+        self.app.logger.info("Performing transaction commit")
         return self.database_connection.execute(text("COMMIT"))
 
     def begin_transaction(self):
-        app.logger.info("Starting transaction")
+        self.app.logger.info("Starting transaction")
         return self.database_connection.execute(text("BEGIN"))
 
-    def createJSON(self, transaction, type, values={}):
+    def createJSON(self, transaction, type, values=None):
+        if values is None:
+            values = {}
         if type == "INSERT":
             where = ""
             name_of_values = list(transaction.values.values())

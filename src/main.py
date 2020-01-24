@@ -11,7 +11,10 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 
-coordinator = Coordinator()
+coordinator = Coordinator(app)
+
+coordinator.add_repository(
+    DP_Repository("localhost", "8081", ['/database/transaction', '/database/commmit', '/database/rollback']))
 
 
 class Invalid_ID(Exception):
@@ -72,6 +75,7 @@ def transaction():
             )
             transactions.append(t)
         coordinator.set_transactions(transactions)
+        coordinator.execute_transaction()
         return "Done"
     else:
         return "TODO"
