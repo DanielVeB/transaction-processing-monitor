@@ -3,7 +3,7 @@ import logging
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 
-from src.library.interface_web_service import IWebService
+from src.library.interfaces import IWebService
 from src.library.repos import Repository
 
 logging.basicConfig(level=logging.DEBUG,

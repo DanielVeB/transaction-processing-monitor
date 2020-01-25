@@ -1,56 +1,14 @@
 import logging
 import uuid
-from dataclasses import dataclass
 
 import requests
 
-from src.entity.request import WebServiceData
-from src.logic.interface_unit_of_work import IUnitOfWork
-
-
-class QueryException(Exception):
-    def __init__(self):
-        super().__init__()
-
-
-class CommitException(Exception):
-    def __init__(self, webservice_url):
-        super().__init__()
-        self.webservice_url = webservice_url
-
-
-class TransactionException(Exception):
-    def __init__(self, webservice_url):
-        self.webservice_url = webservice_url
-        self.message = "Transaction failed for: " + webservice_url
-        super().__init__(self.message)
+from src.library.execptions import QueryException, TransactionException, CommitException
+from src.library.interfaces import IUnitOfWork
 
 
 class Coordinator(IUnitOfWork):
     logger = logging.getLogger(__name__)
-
-    @dataclass
-    class _WebService:
-        url: str
-        _send_transaction_endpoint: str
-        _commit_endpoint: str
-        _rollback_endpoint: str
-        query_list: [] = None
-
-        def add(self, table, values):
-            pass
-
-        def remove(self, table, where):
-            pass
-
-        def update(self, table, values, where):
-            pass
-
-        def commit(self):
-            return requests.post(self.url + self._commit_endpoint)
-
-        def rollback(self):
-            return requests.post(self.url + self._rollback_endpoint)
 
     def __init__(self):
         self._webservices_dict = dict()
@@ -66,24 +24,16 @@ class Coordinator(IUnitOfWork):
             webservices_url_list.append(service.url)
         return webservices_url_list
 
-    def add_service(self, webservice_data: WebServiceData):
+    def add_service(self, webservice):
         webservice_id = uuid.uuid4()
-        url = "http://" + webservice_data.host + ":" + webservice_data.port
-        send_transaction_endpoint = webservice_data.endpoints[0]
-        commit_endpoint = webservice_data.endpoints[1]
-        rollback_endpoint = webservice_data.endpoints[2]
-
-        webservice = self._WebService(url, send_transaction_endpoint, commit_endpoint,
-                                      rollback_endpoint)
-
         self._webservices_dict[webservice_id] = webservice
-        return webservice
 
-    def delete_service(self, webservice: _WebService):
+    def delete_service(self, webservice):
         self.logger.info("Removing service %s from Coordinator", webservice.url)
         for key, value in self._webservices_dict:
             if value == webservice:
                 self._webservices_dict.pop(key)
+                self.logger.info("Service %s from Coordinator", webservice.url)
                 return
 
         self.logger.warning("Service %s not found!", webservice.url)

@@ -1,14 +1,26 @@
-from src.entity.request import WebServiceData
+from src.library.webservices import WebServiceBuilder
 from src.logic.coordinator import Coordinator
 
 coordinator = Coordinator()
 
-webservice_data_first = WebServiceData("localhost", "8080", ["/", "/", "/"])
-webservice_data_second = WebServiceData("localhost", "8081", ["/", "/", "/"])
-webservice_first = coordinator.add_service(webservice_data_first)
-webservice_second = coordinator.add_service(webservice_data_second)
+webservice_first = WebServiceBuilder() \
+    .with_host("localhost") \
+    .with_port("8081") \
+    .rollback_endpoint("/") \
+    .with_commit_endpoint("/") \
+    .with_send_transaction_endpoint("/") \
+    .build()
 
-# How about implementing builder for WebServiceData and converting it to Coordinator._WebService?
+webservice_second = WebServiceBuilder() \
+    .with_host("localhost") \
+    .with_port("8082") \
+    .rollback_endpoint("/") \
+    .with_commit_endpoint("/") \
+    .with_send_transaction_endpoint("/") \
+    .build()
+
+coordinator.add_service(webservice_first)
+coordinator.add_service(webservice_second)
 
 webservice_first.add()
 webservice_first.remove()

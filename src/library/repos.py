@@ -3,7 +3,7 @@ import logging
 
 from sqlalchemy import text
 
-from src.library.interface_repository import IRepository
+from src.library.interfaces import IRepository
 
 
 class Repository(IRepository):
