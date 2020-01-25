@@ -1,143 +1,157 @@
-import uuid as uuid
+import logging
+import uuid
 from dataclasses import dataclass
 
 import requests
-from flask import jsonify
 
-from src.entity.request import DP_Repository
+from src.entity.request import WebServiceData
 from src.logic.interface_unit_of_work import IUnitOfWork
 
 
 class QueryException(Exception):
     def __init__(self):
-        Exception.__init__(self)
+        super().__init__()
 
 
 class CommitException(Exception):
-    def __init__(self):
-        Exception.__init__(self)
+    def __init__(self, webservice_url):
+        super().__init__()
+        self.webservice_url = webservice_url
+
+
+class TransactionException(Exception):
+    def __init__(self, webservice_url):
+        self.webservice_url = webservice_url
+        self.message = "Transaction failed for: " + webservice_url
+        super().__init__(self.message)
 
 
 class Coordinator(IUnitOfWork):
+    logger = logging.getLogger(__name__)
+
     @dataclass
     class _WebService:
-        _url: str
+        url: str
         _send_transaction_endpoint: str
         _commit_endpoint: str
         _rollback_endpoint: str
+        query_list: [] = None
 
-        def send_transaction(self, transaction):
-            return requests.post(self._url + self._send_transaction_endpoint, json=transaction)
+        def add(self, table, values):
+            pass
+
+        def remove(self, table, where):
+            pass
+
+        def update(self, table, values, where):
+            pass
 
         def commit(self):
-            return requests.post(self._url + self._commit_endpoint)
+            return requests.post(self.url + self._commit_endpoint)
 
         def rollback(self):
-            return requests.post(self._url + self._rollback_endpoint)
+            return requests.post(self.url + self._rollback_endpoint)
 
-    def __init__(self, app):
-        self.webservices_dict = dict()
-        self._committed_repository_id_list = []
-        self._changed_repository_id_list = []
-        self._transaction_list = []
-        self._send_transactions_dict = dict()
-        self._reverse_transaction_dict = {}
-        self.app = app
+    def __init__(self):
+        self._webservices_dict = dict()
+        self._committed_webservice_uuid_list = list()
+        self._changed_webservice_uuid_list = list()
+        self._send_queries_dict = dict()
+        self._reverse_transaction_dict = dict()
 
-    def get_all_repositories(self):
-        return self.webservices_dict
+    def get_all_services(self):
+        self.logger.info("Getting services url list")
+        webservices_url_list = []
+        for service in self._webservices_dict.values():
+            webservices_url_list.append(service.url)
+        return webservices_url_list
 
-    def add_repository(self, webservice_data: DP_Repository, webservice_id=None):
-        if webservice_id is None:
-            webservice_id = str(uuid.uuid1())
+    def add_service(self, webservice_data: WebServiceData):
+        webservice_id = uuid.uuid4()
         url = "http://" + webservice_data.host + ":" + webservice_data.port
         send_transaction_endpoint = webservice_data.endpoints[0]
         commit_endpoint = webservice_data.endpoints[1]
         rollback_endpoint = webservice_data.endpoints[2]
 
-        self.webservices_dict[webservice_id] = self._WebService(url, send_transaction_endpoint, commit_endpoint,
-                                                                rollback_endpoint)
-        return webservice_id
+        webservice = self._WebService(url, send_transaction_endpoint, commit_endpoint,
+                                      rollback_endpoint)
 
-    def delete_repository(self, repo_uuid):
-        self.app.logger.info("Removing repository %s from repository dict", repo_uuid)
-        try:
-            return self.webservices_dict.pop(repo_uuid, None)
-        except KeyError:
-            self.app.logger.warning("Repository %s not found", repo_uuid)
-            return None
+        self._webservices_dict[webservice_id] = webservice
+        return webservice
 
-    def get_repository(self, repo_uuid):
-        self.app.logger.info("Get repository %s from repository dict", repo_uuid)
-        try:
-            return self.webservices_dict.get(repo_uuid, None)
-        except KeyError:
-            self.app.logger.warning("Repository %s not found", repo_uuid)
-            return None
+    def delete_service(self, webservice: _WebService):
+        self.logger.info("Removing service %s from Coordinator", webservice.url)
+        for key, value in self._webservices_dict:
+            if value == webservice:
+                self._webservices_dict.pop(key)
+                return
 
-    def set_transactions(self, transactions):
-        self._transaction_list = transactions.copy()
-
-    def get_transaction(self):
-        return self._transaction_list
+        self.logger.warning("Service %s not found!", webservice.url)
 
     def execute_transaction(self):
-        if len(self._transaction_list) == 0:
-            return "There's no transaction. Please add transaction before"
-        for transaction in self._transaction_list:
+        if len(self._webservices_dict) == 0:
+            self.logger.error("No services found!")
+            return
+
+        for key, webservice in self._webservices_dict:
             try:
-                self.app.logger.info(self.webservices_dict)
-                webservice = self.webservices_dict[transaction.repository_id]
-                self._changed_repository_id_list.append(transaction.repository_id)
-                self._send_transactions_dict[transaction.repository_id] = transaction.statements
-                result = webservice.send_transaction(transaction.serialize())
-                self.app.logger.info("Sending request")
-                if result.status_code != 200:
-                    raise QueryException
+                self.logger.info("Sending queries to %s", webservice.url)
+                self._changed_webservice_uuid_list.append(key)
+                self._send_queries_dict[key] = webservice.query_list
+                result = webservice.send_transaction(webservice.query_list.serialize())
+                self.logger.info("Sending request")
+                if result.status_code != requests.codes.ok:
+                    raise QueryException()
                 else:
-                    self._reverse_transaction_dict[transaction.repository_id] = result.json()
-            except (KeyError, QueryException) as ex:
-                self.app.logger.error("Error executing query!")
+                    self._reverse_transaction_dict[key] = result.json()
+            except (KeyError, QueryException):
+                self.logger.error("Error while executing query for %s", webservice.url)
                 self._rollback()
-                return "Transaction failed."
-        return "Transaction executed successfully"
+                raise TransactionException(webservice_url=webservice.url)
 
     def commit(self):
-        self.app.logger.info("Committing changes")
-        for repo_id in self._changed_repository_id_list:
+        self.logger.info("Committing changes")
+        for webservice_uuid in self._changed_webservice_uuid_list:
             try:
-                webservice = self.webservices_dict[repo_id]
+                webservice = self._webservices_dict[webservice_uuid]
                 result = webservice.commit()
-                if result.status_code != 200:
-                    raise CommitException
-                self._committed_repository_id_list.append(repo_id)
-                self._changed_repository_id_list.remove(repo_id)
-            except CommitException:
-                self.app.logger.error("Commit failed!")
+                if result.status_code != requests.codes.ok:
+                    raise CommitException(webservice_url=webservice.url)
+                else:
+                    self._committed_webservice_uuid_list.append(webservice_uuid)
+                    self._changed_webservice_uuid_list.remove(webservice_uuid)
+                    self.logger.info("Added %s to committed webservices list", webservice.url)
+            except CommitException as ex:
+                self.logger.error("Commit failed for %s", ex.webservice_url)
                 self._rollback()
-                return jsonify(error="Commit error!")
+                raise TransactionException(webservice_url=ex.webservice_url)
 
-        self._committed_repository_id_list.clear()
-        self._changed_repository_id_list.clear()
-        self._transaction_list.clear()
-        self._send_transactions_dict.clear()
-        return jsonify(status="Success")
+        self.logger.info("Commit successful!")
+        self.logger.info("Clearing query data")
+        self._committed_webservice_uuid_list.clear()
+        self._changed_webservice_uuid_list.clear()
+        self._send_queries_dict.clear()
 
     def _rollback(self):
-        self.app.logger.warning("Rolling back changes")
-        for repo_id in self._changed_repository_id_list:
-            webservice = self.webservices_dict[repo_id]
+        self.logger.warning("Rolling back changes!")
+        for webservice_uuid in self._changed_webservice_uuid_list:
+            webservice = self._webservices_dict[webservice_uuid]
             webservice.rollback()
+            self.logger.info("Rolled back transaction for %s", webservice.url)
 
-        for repo_id in self._committed_repository_id_list:
-            transactions = self._reverse_transaction_dict[repo_id]
-            webservice = self.webservices_dict[repo_id]
+        for webservice_uuid in self._committed_webservice_uuid_list:
+            transactions = self._reverse_transaction_dict[webservice_uuid]
+            webservice = self._webservices_dict[webservice_uuid]
 
             for transaction in transactions:
+                self.logger.info("Rolling back committed changes for %s", webservice.url)
                 webservice.send_transaction(transaction.serialize())
+
+            self.logger.info("Committing rolled back changes for %s", webservice.url)
             webservice.commit()
 
-        self._committed_repository_id_list.clear()
-        self._changed_repository_id_list.clear()
-        self._transaction_list.clear()
-        self._send_transactions_dict.clear()
+        self.logger.info("Rollback successful!")
+        self.logger.info("Clearing query data")
+        self._committed_webservice_uuid_list.clear()
+        self._changed_webservice_uuid_list.clear()
+        self._send_queries_dict.clear()
