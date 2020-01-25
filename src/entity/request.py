@@ -3,7 +3,7 @@ from uuid import UUID
 
 
 @dataclass
-class DP_Repository:
+class WebServiceData:
     host: str
     port: str
     endpoints: []
