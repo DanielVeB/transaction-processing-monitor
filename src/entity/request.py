@@ -1,14 +1,6 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-
-@dataclass
-class WebServiceData:
-    host: str
-    port: str
-    endpoints: []
-
-
 @dataclass
 class DP_Transaction:
     repository_id: UUID
