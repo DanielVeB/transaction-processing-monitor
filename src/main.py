@@ -3,8 +3,8 @@ import logging
 
 from flask import Flask, request, jsonify
 
-from src.entity.request import DP_Transaction, DP_Statement, WebServiceData
 from src.logic.coordinator import Coordinator
+from src.logic.request import Transaction, Query
 
 app = Flask(__name__)
 
@@ -12,11 +12,7 @@ logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(levelname)s - %(message)s',
                     datefmt='%d-%b-%y %H:%M:%S')
 
-coordinator = Coordinator(app)
-
-coordinator.add_service(
-    WebServiceData("localhost", "9234", ['/database/transaction', '/database/commmit', '/database/rollback']), "1")
-
+coordinator = Coordinator()
 
 class Invalid_ID(Exception):
     status_code = 401
@@ -64,14 +60,14 @@ def transaction():
             statements = []
             for statement in transaction['statements']:
                 statements.append(
-                    DP_Statement(
+                    Query(
                         method=statement['method'],
                         table_name=statement['table_name'],
                         values=get_values(statement),
                         where=get_where(statement)
                     )
                 )
-            t = DP_Transaction(
+            t = Transaction(
                 repository_id=transaction['repository_id'],
                 statements=statements
             )
