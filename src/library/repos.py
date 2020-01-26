@@ -10,7 +10,7 @@ class Repository(IRepository):
     logger = logging.getLogger(__name__)
 
     def __init__(self, database_connection, app):
-        self.database_connection = database_connection.engine
+        self.database_connection = database_connection
         self.app = app
 
     def _update(self, request):
@@ -37,22 +37,22 @@ class Repository(IRepository):
                     table, select = transaction.to_sql()
                     stmt = text(select)
                     data_select = self.database_connection.execute(stmt)
-                    result.append(self.createJSON(transaction, "INSERT", data_select))
+                    result.append(self.create_json(transaction, "INSERT", data_select))
                     self._insert(table)
                 elif transaction.method == "DELETE":
                     table, select = transaction.to_sql()
                     stmt = text(select)
                     data_select = self.database_connection.execute(stmt)
-                    result.append(self.createJSON(transaction, "DELETE", data_select))
+                    result.append(self.create_json(transaction, "DELETE", data_select))
                     self._delete(table)
                 else:
                     table, values = transaction.to_sql()
                     stmt = text(select)
                     data_select = self.database_connection.execute(stmt)
-                    result.append(self.createJSON(transaction, "UPDATE", data_select))
+                    result.append(self.create_json(transaction, "UPDATE", data_select))
                     self._update(table)
             except:
-                print("Error: transactions failed")
+                self.logger.error("Transaction failed!")
         result = {"statements": result}
         return result
 
@@ -68,10 +68,11 @@ class Repository(IRepository):
         self.app.logger.info("Starting transaction")
         return self.database_connection.execute(text("BEGIN"))
 
-    def createJSON(self, transaction, type, values=None):
+    @staticmethod
+    def create_json(transaction, query_type, values=None):
         if values is None:
             values = {}
-        if type == "INSERT":
+        if query_type == "INSERT":
             where = ""
             name_of_values = list(transaction.values.values())
             for i in range(0, len(name_of_values)):
@@ -80,8 +81,8 @@ class Repository(IRepository):
             element = {"method": "DELETE", "table_name": transaction.table_name, "where": where}
             result = json.dumps(element)
             return result
-        elif type == "UPDATE":
-            updateLst = []
+        elif query_type == "UPDATE":
+            update_list = []
             name_of_values = list(transaction.values.values())
             for j in range(0, len(values)):
                 val = []
@@ -89,17 +90,17 @@ class Repository(IRepository):
                     val.append(name_of_values[i] + ":" + values[j][i])
                 element = {"method": transaction.method, "table_name": transaction.table_name, "values": val,
                            "where": transaction.where}
-                updateLst.append(element)
-            result = json.dumps(updateLst)
+                update_list.append(element)
+            result = json.dumps(update_list)
             return result
         else:
-            insertLst = []
+            insert_list = []
             name_of_values = list(transaction.values.values())
             for j in range(0, len(values)):
                 val = []
                 for i in range(0, len(name_of_values)):
                     val.append(name_of_values[i] + ":" + values[j][i])
                 element = {"method": "INSERT", "table_name": transaction.table_name, "values": values}
-                insertLst.append(element)
-            result = json.dumps(insertLst)
+                insert_list.append(element)
+            result = json.dumps(insert_list)
             return result

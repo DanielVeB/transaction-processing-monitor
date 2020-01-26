@@ -16,8 +16,10 @@ class DatabaseService(IDatabaseService):
                                                + username + ":" + pwd + "@" \
                                                + db_uri + port + "/" + db_name
         self.flask_server = flask_server
+        self.repository = None
 
     def create_repository(self):
         self.flask_server.config['SQLALCHEMY_DATABASE_URI'] = self.url
         database_connection = SQLAlchemy(self.flask_server)
-        return Repository(database_connection, self.flask_server)
+        self.repository = Repository(database_connection.engine, self.flask_server)
+        return self.repository
