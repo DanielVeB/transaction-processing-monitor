@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 @dataclass
-class DP_Transaction:
+class Transaction:
     repository_id: UUID
     statements: []
 
@@ -17,7 +17,7 @@ class DP_Transaction:
 
 
 @dataclass
-class DP_Statement:
+class Query:
     # INSERT, UPDATE or DELETE
     method: str
     table_name: str
@@ -26,7 +26,7 @@ class DP_Statement:
     # SQL statement
     where: str = None
 
-    def toSQL(self):
+    def to_sql(self):
         result = ""
         select = ""
 
@@ -40,7 +40,7 @@ class DP_Statement:
                 else:
                     result += "'" + values[i] + "',"
             result = result[:-1]
-            if self.where != None:
+            if self.where is not None:
                 result += " WHERE " + self.where
 
         elif self.method == "UPDATE":
@@ -53,7 +53,7 @@ class DP_Statement:
                 else:
                     result += keys[i] + " = '" + values[i] + "',"
             result = result[:-1]
-            if self.where != None:
+            if self.where is not None:
                 result += " WHERE " + self.where
             keys = ','.join(self.values.keys())
             select = "SELECT " + keys + " FROM " + self.table_name

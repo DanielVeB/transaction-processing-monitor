@@ -18,10 +18,10 @@ class IRepository(ABC):
     def rollback(self): raise NotImplementedError
 
 
-class IWebService(ABC):
+class IDatabaseService(ABC):
 
     @abstractmethod
-    def create_repository(self, db_app): raise NotImplementedError
+    def create_repository(self): raise NotImplementedError
 
 
 class IUnitOfWork(ABC):
