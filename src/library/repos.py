@@ -3,7 +3,7 @@ import logging
 from sqlalchemy import text
 
 from src.library.interfaces import IRepository
-from src.logic.request import Query, Transaction
+from src.logic.request import Query
 
 
 class Repository(IRepository):

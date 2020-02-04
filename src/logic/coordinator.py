@@ -50,7 +50,7 @@ class Coordinator(IUnitOfWork):
                 self.logger.info("Sending queries to %s", webservice.url)
                 self._changed_webservice_uuid_list.append(key)
                 self._send_queries_dict[key] = webservice.query_list
-                result = webservice.send_transaction(json.dumps(webservice.query_list, cls=QueryEncoder))
+                result = webservice.send_transaction(webservice.query_list, cls=QueryEncoder)
                 self.logger.info("Sending request")
                 if result.status_code != requests.codes.ok:
                     raise QueryException()

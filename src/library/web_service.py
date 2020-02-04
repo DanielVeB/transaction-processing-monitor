@@ -11,32 +11,32 @@ logging.basicConfig(level=logging.DEBUG,
 
 app = Flask(__name__)
 
-url = "postgres://gmavcrpg:k0fO5TZwnQrXFh7e8Q2lcJOZYjAgaT3g@rajje.db.elephantsql.com:5432/gmavcrpg"
+url = "mysql://admin:admin1234@transaction-moniotr.cyijtv3eudvp.eu-west-2.rds.amazonaws.com:3306/test"
 database_service = DatabaseService(app, url)
-
 repoCoordinator = RepoCoordinator(database_service.create_repository())
 
-# Transaction request
-@app.route('/database/transaction', methods=['POST'])
+
+@app.route('/execute', methods=['POST'])
 def execute_transaction():
-    result = repoCoordinator.execute_transaction(request.get_json())
+    content = request.get_json()
+    result = repoCoordinator.execute_transaction(content)
     return jsonify(result)
 
 
 # Should this methods have jsonify return?
 # Commit
-@app.route('/database/commmit', methods=['POST'])
+@app.route('/commit', methods=['POST'])
 def commit():
     result = repoCoordinator.commit()
     return result
 
 
 # Rollback
-@app.route('/database/rollback', methods=['POST'])
+@app.route('/rollback', methods=['POST'])
 def rollback():
     result = repoCoordinator.rollback()
     return result
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9234)
+    app.run(host='0.0.0.0', port=9019)

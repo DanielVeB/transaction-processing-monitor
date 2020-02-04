@@ -14,6 +14,7 @@ logging.basicConfig(level=logging.DEBUG,
 
 coordinator = Coordinator()
 
+
 class Invalid_ID(Exception):
     status_code = 401
 
@@ -77,21 +78,10 @@ def transaction():
     else:
         return json.dumps([t.serialize() for t in coordinator.get_transaction()])
 
+
 @app.route('/dp/transaction/start', methods=['GET'])
 def start_transaction():
     return coordinator.execute_transaction()
-
-# Repository
-# =================================================
-@app.route('/dp/resources', methods=['POST'])
-def add_repo():
-    content = request.get_json()
-    repo = WebServiceData(
-        host=content['host'],
-        port=content['port'],
-        endpoints=content['endpoints']
-    )
-    return coordinator.add_service(repo)
 
 
 @app.route('/dp/resources/<id>', methods=['GET', 'DELETE'])
