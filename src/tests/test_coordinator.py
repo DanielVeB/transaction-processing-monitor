@@ -4,7 +4,7 @@ from unittest import mock
 import requests
 
 # This is the class we want to test
-from src.library.webservices import WebServiceBuilder
+from src.logic.webservices import WebServiceBuilder
 from src.logic.coordinator import Coordinator
 from src.logic.request import Query
 
