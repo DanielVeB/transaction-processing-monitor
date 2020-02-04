@@ -30,7 +30,6 @@ class Repository(IRepository):
 
     def execute_statement(self, statement):
         result = []
-        self.begin_transaction()
         for transaction in statement["statements"]:
             try:
                 if transaction.method == "INSERT":
@@ -58,15 +57,11 @@ class Repository(IRepository):
 
     def rollback(self):
         self.app.logger.warning("Performing transaction rollback")
-        return self.database_connection.execute(text("ROLLBACK"))
+        self.database_connection.rollback()
 
     def commit(self):
         self.app.logger.info("Performing transaction commit")
-        return self.database_connection.execute(text("COMMIT"))
-
-    def begin_transaction(self):
-        self.app.logger.info("Starting transaction")
-        return self.database_connection.execute(text("BEGIN"))
+        self.database_connection.commit()
 
     @staticmethod
     def create_json(transaction, query_type, values=None):

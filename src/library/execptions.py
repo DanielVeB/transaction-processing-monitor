@@ -14,3 +14,9 @@ class TransactionException(Exception):
         self.webservice_url = webservice_url
         self.message = "Transaction failed for: " + webservice_url
         super().__init__(self.message)
+
+
+class MissingParametersException(Exception):
+    def __init__(self):
+        self.message = "Not all required parameters were given!"
+        super().__init__(self.message)

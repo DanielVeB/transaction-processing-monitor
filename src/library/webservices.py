@@ -2,6 +2,8 @@ from dataclasses import dataclass
 
 import requests
 
+from src.library.execptions import MissingParametersException
+
 
 @dataclass
 class WebServiceBuilder:
@@ -32,6 +34,8 @@ class WebServiceBuilder:
         return self
 
     def build(self):
+        if vars(self).values() is None:
+            raise MissingParametersException
         url = "http://" + self._host + ":" + self._port
         return _WebService(url, self._send_transaction_endpoint, self._commit_endpoint, self._rollback_endpoint)
 
