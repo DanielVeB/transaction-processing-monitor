@@ -1,4 +1,4 @@
-from src.library.webservices import WebServiceBuilder
+from src.logic.webservices import WebServiceBuilder
 from src.logic.coordinator import Coordinator
 
 coordinator = Coordinator()

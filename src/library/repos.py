@@ -3,6 +3,7 @@ import logging
 from sqlalchemy import text
 
 from src.library.interfaces import IRepository
+from src.logic.request import Query, Transaction
 
 
 class Repository(IRepository):
@@ -102,3 +103,50 @@ class Repository(IRepository):
                 result += " WHERE " + transaction.where
 
             return result
+
+
+def get_values(statement):
+    try:
+        values_dict = {}
+        values = statement['values']
+        for value in values:
+            key = value['key']
+            val = value['value']
+            values_dict[key] = val
+        return values_dict
+    except:
+        return {}
+
+
+def get_where(statement):
+    try:
+        return statement['where']
+    except:
+        return None
+
+
+class RepoCoordinator:
+
+    def __init__(self, repository: Repository):
+        self.repository = repository
+        self.data_to_reverse = []
+
+    def rollback(self):
+        self.repository.rollback()
+
+    def commit(self):
+        self.repository.commit()
+
+    def execute_transaction(self, transaction):
+        statements = []
+        for statement in transaction['statements']:
+            statements.append(
+                Query(
+                    method=statement['method'],
+                    table_name=statement['table_name'],
+                    values=get_values(statement),
+                    where=get_where(statement)
+                )
+            )
+            statements.append(statement)
+        self.data_to_reverse = self.repository.execute_statement(statements)
