@@ -25,7 +25,7 @@ class Coordinator(IUnitOfWork):
         return webservices_url_list
 
     def add_service(self, webservice):
-        webservice_id = uuid.uuid4()
+        webservice_id = str(uuid.uuid4())
         self._webservices_dict[webservice_id] = webservice
 
     def delete_service(self, webservice):
@@ -43,17 +43,18 @@ class Coordinator(IUnitOfWork):
             self.logger.error("No services found!")
             return
 
-        for key, webservice in self._webservices_dict:
+        for key, webservice in self._webservices_dict.items():
             try:
                 self.logger.info("Sending queries to %s", webservice.url)
                 self._changed_webservice_uuid_list.append(key)
                 self._send_queries_dict[key] = webservice.query_list
-                result = webservice.send_transaction(webservice.query_list.serialize())
-                self.logger.info("Sending request")
-                if result.status_code != requests.codes.ok:
-                    raise QueryException()
-                else:
-                    self._reverse_transaction_dict[key] = result.json()
+                for item in webservice.query_list:
+                    result = webservice.send_transaction(item.serialize())
+                    self.logger.info("Sending request")
+                    if result.status_code != requests.codes.ok:
+                        raise QueryException()
+                    else:
+                        self._reverse_transaction_dict[key] = result.json()
             except (KeyError, QueryException):
                 self.logger.error("Error while executing query for %s", webservice.url)
                 self._rollback()
