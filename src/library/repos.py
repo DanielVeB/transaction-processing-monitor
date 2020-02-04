@@ -1,4 +1,3 @@
-import json
 import logging
 
 from sqlalchemy import text
@@ -33,26 +32,25 @@ class Repository(IRepository):
         for transaction in statement["statements"]:
             try:
                 if transaction.method == "INSERT":
-                    table, select = transaction.to_sql()
-                    stmt = text(select)
+                    sql_query, select_to_reverse = transaction.to_sql()
+                    stmt = text(select_to_reverse)
                     data_select = self.database_connection.execute(stmt)
-                    result.append(self.create_json(transaction, "INSERT", data_select))
-                    self._insert(table)
+                    result.append(self.create_reverse_query(transaction, data_select))
+                    self._insert(sql_query)
                 elif transaction.method == "DELETE":
-                    table, select = transaction.to_sql()
-                    stmt = text(select)
+                    sql_query, select_to_reverse = transaction.to_sql()
+                    stmt = text(select_to_reverse)
                     data_select = self.database_connection.execute(stmt)
-                    result.append(self.create_json(transaction, "DELETE", data_select))
-                    self._delete(table)
+                    result.append(self.create_reverse_query(transaction, data_select))
+                    self._delete(sql_query)
                 else:
-                    table, values = transaction.to_sql()
-                    stmt = text(select)
+                    sql_query, select_to_reverse = transaction.to_sql()
+                    stmt = text(select_to_reverse)
                     data_select = self.database_connection.execute(stmt)
-                    result.append(self.create_json(transaction, "UPDATE", data_select))
-                    self._update(table)
+                    result.append(self.create_reverse_query(transaction, data_select))
+                    self._update(sql_query)
             except:
                 self.logger.error("Transaction failed!")
-        result = {"statements": result}
         return result
 
     def rollback(self):
@@ -64,38 +62,43 @@ class Repository(IRepository):
         self.database_connection.commit()
 
     @staticmethod
-    def create_json(transaction, query_type, values=None):
+    def create_reverse_query(transaction, values=None):
         if values is None:
             values = {}
-        if query_type == "INSERT":
+        if transaction.method == "INSERT":
             where = ""
             name_of_values = list(transaction.values.values())
             for i in range(0, len(name_of_values)):
                 where += name_of_values[i] + "=" + values[0][i] + " AND "
             where = where[:-4]
-            element = {"method": "DELETE", "table_name": transaction.table_name, "where": where}
-            result = json.dumps(element)
+
+            result = "DELETE FROM " + transaction.table_name + " where " + where
+
             return result
-        elif query_type == "UPDATE":
-            update_list = []
+        elif transaction.method == "UPDATE":
             name_of_values = list(transaction.values.values())
-            for j in range(0, len(values)):
-                val = []
-                for i in range(0, len(name_of_values)):
-                    val.append(name_of_values[i] + ":" + values[j][i])
-                element = {"method": transaction.method, "table_name": transaction.table_name, "values": val,
-                           "where": transaction.where}
-                update_list.append(element)
-            result = json.dumps(update_list)
+            result = "UPDATE " + transaction.table_name + " SET "
+            for i in range(0, len(name_of_values)):
+                if isinstance(values[0][i], int):
+                    result += name_of_values[i] + " = " + str(values[0][i]) + ","
+                else:
+                    result += name_of_values[i] + " = '" + values[0][i] + "',"
+            result = result[:-1]
+
+            if transaction.where is not None:
+                result += " WHERE " + transaction.where
+
             return result
         else:
-            insert_list = []
-            name_of_values = list(transaction.values.values())
-            for j in range(0, len(values)):
-                val = []
-                for i in range(0, len(name_of_values)):
-                    val.append(name_of_values[i] + ":" + values[j][i])
-                element = {"method": "INSERT", "table_name": transaction.table_name, "values": values}
-                insert_list.append(element)
-            result = json.dumps(insert_list)
+            keys = ','.join(transaction.values.keys())
+            result = transaction.method + " INTO " + transaction.table_name + "(" + keys + ")" + " VALUES "
+            for i in range(0, len(keys)):
+                if isinstance(values[0][i], int):
+                    result += str(values[0][i]) + ","
+                else:
+                    result += "'" + values[0][i] + "',"
+            result = result[:-1]
+            if transaction.where is not None:
+                result += " WHERE " + transaction.where
+
             return result

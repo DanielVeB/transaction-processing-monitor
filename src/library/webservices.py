@@ -1,8 +1,8 @@
+import requests
 from dataclasses import dataclass
 
-import requests
-
 from src.library.execptions import MissingParametersException
+from src.logic.request import Query
 
 
 @dataclass
@@ -48,14 +48,8 @@ class _WebService:
     _rollback_endpoint: str
     query_list: [] = None
 
-    def add(self, table, values):
-        pass
-
-    def remove(self, table, where):
-        pass
-
-    def update(self, table, values, where):
-        pass
+    def add_Query(self, query: Query):
+        self.query_list.append(query)
 
     def commit(self):
         return requests.post(self.url + self._commit_endpoint)
