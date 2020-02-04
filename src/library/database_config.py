@@ -1,6 +1,8 @@
 import logging
 
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 from src.library.interfaces import IDatabaseService
 from src.library.repos import Repository
@@ -21,5 +23,23 @@ class DatabaseService(IDatabaseService):
     def create_repository(self):
         self.flask_server.config['SQLALCHEMY_DATABASE_URI'] = self.url
         database_connection = SQLAlchemy(self.flask_server)
-        self.repository = Repository(database_connection.engine, self.flask_server)
+        engine = database_connection.engine
+        self.repository = Repository(scoped_session(sessionmaker(autocommit=False,
+                                                                 autoflush=False,
+                                                                 bind=engine)), self.flask_server)
         return self.repository
+
+
+# Example
+app = Flask(__name__)
+
+URL = "mysql://admin:admin1234@transaction-moniotr.cyijtv3eudvp.eu-west-2.rds.amazonaws.com:3306/test"
+dbs = DatabaseService(app, URL)
+repo = dbs.create_repository()
+
+try:
+    repo.database_connection.execute("Insert into tes values (100, 100)")
+except:
+    print("Failure")
+
+repo.database_connection.commit()
