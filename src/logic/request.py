@@ -1,6 +1,6 @@
-from uuid import UUID
-
 from dataclasses import dataclass
+from json import JSONEncoder
+from uuid import UUID
 
 
 @dataclass
@@ -66,9 +66,11 @@ class Query:
 
         return result, select
 
-    def serialize(self):
+
+class QueryEncoder(JSONEncoder):
+    def default(self, query):
         return {
-            "method": self.method,
-            "table_name": self.table_name,
-            "values": ([{'key': k, 'value': v} for k, v in self.values.items()])
+            "method": query.method,
+            "table_name": query.table_name,
+            "values": ([{'key': k, 'value': v} for k, v in query.values.items()])
         }

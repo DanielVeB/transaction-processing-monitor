@@ -1,3 +1,4 @@
+import json
 import logging
 import uuid
 
@@ -5,6 +6,7 @@ import requests
 
 from src.library.execptions import QueryException, TransactionException, CommitException
 from src.library.interfaces import IUnitOfWork
+from src.logic.request import QueryEncoder
 
 
 class Coordinator(IUnitOfWork):
@@ -48,13 +50,12 @@ class Coordinator(IUnitOfWork):
                 self.logger.info("Sending queries to %s", webservice.url)
                 self._changed_webservice_uuid_list.append(key)
                 self._send_queries_dict[key] = webservice.query_list
-                for item in webservice.query_list:
-                    result = webservice.send_transaction(item.serialize())
-                    self.logger.info("Sending request")
-                    if result.status_code != requests.codes.ok:
-                        raise QueryException()
-                    else:
-                        self._reverse_transaction_dict[key] = result.json()
+                result = webservice.send_transaction(json.dumps(webservice.query_list, cls=QueryEncoder))
+                self.logger.info("Sending request")
+                if result.status_code != requests.codes.ok:
+                    raise QueryException()
+                else:
+                    self._reverse_transaction_dict[key] = result.json()
             except (KeyError, QueryException):
                 self.logger.error("Error while executing query for %s", webservice.url)
                 self._rollback()
@@ -94,9 +95,8 @@ class Coordinator(IUnitOfWork):
             transactions = self._reverse_transaction_dict[webservice_uuid]
             webservice = self._webservices_dict[webservice_uuid]
 
-            for transaction in transactions:
-                self.logger.info("Rolling back committed changes for %s", webservice.url)
-                webservice.send_transaction(transaction.serialize())
+            self.logger.info("Rolling back committed changes for %s", webservice.url)
+            webservice.send_transaction(json.dump(transactions, cls=QueryEncoder))
 
             self.logger.info("Committing rolled back changes for %s", webservice.url)
             webservice.commit()

@@ -1,5 +1,6 @@
-import requests
 from dataclasses import dataclass
+
+import requests
 
 from src.library.execptions import MissingParametersException
 from src.logic.request import Query
@@ -37,7 +38,7 @@ class WebServiceBuilder:
         if vars(self).values() is None:
             raise MissingParametersException
         url = "http://" + self._host + ":" + self._port
-        return _WebService(url, self._send_transaction_endpoint, self._commit_endpoint, self._rollback_endpoint)
+        return _WebService(url, self._send_transaction_endpoint, self._commit_endpoint, self._rollback_endpoint, [])
 
 
 @dataclass
@@ -46,9 +47,9 @@ class _WebService:
     _send_transaction_endpoint: str
     _commit_endpoint: str
     _rollback_endpoint: str
-    query_list: [] = None
+    query_list: []
 
-    def add_Query(self, query: Query):
+    def add_query(self, query: Query):
         self.query_list.append(query)
 
     def commit(self):
@@ -56,3 +57,6 @@ class _WebService:
 
     def rollback(self):
         return requests.post(self.url + self._rollback_endpoint)
+
+    def send_transaction(self, content):
+        return requests.post(self.url + self._send_transaction_endpoint, json=content)

@@ -9,7 +9,7 @@ from src.logic.coordinator import Coordinator
 from src.logic.request import Query
 
 
-class WenServiceTestClass:
+class WebServiceTestClass:
     webservice_first = WebServiceBuilder() \
         .with_host("localhost") \
         .with_port("8081") \
@@ -43,12 +43,11 @@ def mocked_requests_get(*args, **kwargs):
 
 class CoordinatorTestClass(unittest.TestCase):
 
-    # We patch 'requests.get' with our own method. The mock object is passed in to our test case method.
     @mock.patch('requests.post', side_effect=mocked_requests_get)
-    def test_fetch(self, mock_get):
+    def test_flow(self, mock_get):
         coordinator = Coordinator()
-        coordinator.add_service(WenServiceTestClass.webservice_first)
-        WenServiceTestClass.webservice_first.add(Query("method", "aaaa", {"key": "value"}))
+        coordinator.add_service(WebServiceTestClass.webservice_first)
+        WebServiceTestClass.webservice_first.add_query(Query("INSERT", "test", {"key": "value"}))
         try:
             coordinator.execute_transaction()
             coordinator.commit()
