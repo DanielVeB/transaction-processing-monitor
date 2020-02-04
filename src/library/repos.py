@@ -1,3 +1,4 @@
+import json
 import logging
 
 from sqlalchemy import text
@@ -140,6 +141,7 @@ class RepoCoordinator:
     def execute_transaction(self, transaction):
         statements = []
         for statement in transaction['statements']:
+            statement = json.loads(statement)
             statements.append(
                 Query(
                     method=statement['method'],
