@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG,
 
 app = Flask(__name__)
 
-url = "mysql://admin:admin1234@transaction-moniotr.cyijtv3eudvp.eu-west-2.rds.amazonaws.com:3306/test"
+url = "mysql://root:root@localhost:3306/test"
 database_service = DatabaseService(app, url)
 repoCoordinator = RepoCoordinator(database_service.create_repository())
 
@@ -39,4 +39,4 @@ def rollback():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=9035, debug=True)
+    app.run(host='0.0.0.0', port=9030, debug=True)

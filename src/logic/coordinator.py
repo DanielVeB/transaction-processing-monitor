@@ -65,7 +65,8 @@ class Coordinator(IUnitOfWork):
 
     def commit(self):
         self.logger.info("Committing changes")
-        for webservice_uuid in self._changed_webservice_uuid_list:
+        webservices_to_be_committed = self._changed_webservice_uuid_list.copy()
+        for webservice_uuid in webservices_to_be_committed:
             try:
                 webservice = self._webservices_dict[webservice_uuid]
                 result = webservice.commit()
@@ -96,12 +97,12 @@ class Coordinator(IUnitOfWork):
         for webservice_uuid in self._committed_webservice_uuid_list:
             transactions = self._reverse_transaction_dict[webservice_uuid]
             webservice = self._webservices_dict[webservice_uuid]
-
+            dict_to_send = dict()
+            dict_to_send['reverse'] = transactions
             self.logger.info("Rolling back committed changes for %s", webservice.url)
-            webservice.send_transaction(json.dump(transactions, cls=QueryEncoder))
 
+            webservice.send_transaction(dict_to_send)
             self.logger.info("Committing rolled back changes for %s", webservice.url)
-            webservice.commit()
 
         self.logger.info("Rollback successful!")
         self.logger.info("Clearing query data")
