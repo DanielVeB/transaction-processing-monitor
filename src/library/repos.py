@@ -96,13 +96,14 @@ class Repository(IRepository):
             return result
         else:
             keys = ','.join(transaction.values.keys())
-            result = transaction.method + " INTO " + transaction.table_name + "(" + keys + ")" + " VALUES "
+            result = transaction.method + " INTO " + transaction.table_name + "(" + keys + ")" + " VALUES ("
             for i in range(0, len(keys)):
                 if isinstance(values[0][i], int):
                     result += str(values[0][i]) + ","
                 else:
                     result += "'" + values[0][i] + "',"
             result = result[:-1]
+            result += ") "
             if transaction.where is not None:
                 result += " WHERE " + transaction.where
 

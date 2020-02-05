@@ -1,6 +1,7 @@
-from dataclasses import dataclass
 from json import JSONEncoder
 from uuid import UUID
+
+from dataclasses import dataclass
 
 
 @dataclass
@@ -35,13 +36,14 @@ class Query:
         if self.method == "INSERT":
             keys = ','.join(self.values.keys())
             values = list(self.values.values())
-            result = self.method + " INTO " + self.table_name + "(" + keys + ")" + " VALUES "
+            result = self.method + " INTO " + self.table_name + "(" + keys + ")" + " VALUES ("
             for i in range(0, len(values)):
                 if isinstance(values[i], int):
                     result += str(values[i]) + ","
                 else:
                     result += "'" + values[i] + "',"
             result = result[:-1]
+            result += ") "
             if self.where is not None:
                 result += " WHERE " + self.where
 
@@ -62,7 +64,7 @@ class Query:
         else:
             keys = ','.join(self.values.keys())
             result = "DELETE FROM " + self.table_name + " WHERE " + self.where
-            select = "SELECT " + keys + " FROM " + self.table_name + " WHERE " + self.where
+            select = "SELECT * FROM " + self.table_name + " WHERE " + self.where
 
         return result, select
 
