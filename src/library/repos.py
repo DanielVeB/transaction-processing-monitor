@@ -88,30 +88,34 @@ class Repository(IRepository):
 
             return result
         elif transaction.method == "UPDATE":
+            update_elements = []
             old_columns = list(transaction.values.keys())
-            result = "UPDATE " + transaction.table_name + " SET "
-            for i in range(0, len(values[0])):
-                if isinstance(values[0][i], int):
-                    result += str(old_columns[i]) + "=" + str(values[0][i]) + ","
-                else:
-                    result += str(old_columns[i]) + "='" + str(values[0][i]) + "',"
-            result = result[:-1]
+            for j in range(0, values):
+                result = "UPDATE " + transaction.table_name + " SET "
+                for i in range(0, len(values[j])):
+                    if isinstance(values[j][i], int):
+                        result += str(old_columns[i]) + "=" + str(values[j][i]) + ","
+                    else:
+                        result += str(old_columns[i]) + "='" + str(values[j][i]) + "',"
+                result = result[:-1]
 
-            if transaction.where is not None:
-                result += " WHERE " + transaction.where
-
-            return result
+                if transaction.where is not None:
+                    result += " WHERE " + transaction.where
+                update_elements.append(result)
+            return update_elements
         else:
-            result = "INSERT INTO " + transaction.table_name + " VALUES ("
-            for i in range(0, len(values[0])):
-                if isinstance(values[0][i], int):
-                    result += str(values[0][i]) + ","
-                else:
-                    result += "'" + values[0][i] + "',"
-            result = result[:-1]
-            result += ")"
-
-            return result
+            insert_elements = []
+            for j in range(0, values):
+                result = "INSERT INTO " + transaction.table_name + " VALUES ("
+                for i in range(0, len(values[j])):
+                    if isinstance(values[j][i], int):
+                        result += str(values[j][i]) + ","
+                    else:
+                        result += "'" + values[j][i] + "',"
+                result = result[:-1]
+                result += ")"
+                insert_elements.append(result)
+            return insert_elements
 
     def reverse(self, statement):
         self.database_connection.execute(text(statement))
