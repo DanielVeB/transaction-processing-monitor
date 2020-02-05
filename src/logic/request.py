@@ -72,7 +72,7 @@ class Query:
 
 
 @dataclass
-class QueryBuilder():
+class QueryBuilder:
     # INSERT, UPDATE or DELETE
     _method: str
     _table_name: str
