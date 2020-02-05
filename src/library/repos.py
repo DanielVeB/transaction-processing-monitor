@@ -17,17 +17,17 @@ class Repository(IRepository):
     def _update(self, request):
         self.logger.info("Updating row")
         stmt = text(request)
-        return self.database_connection.execute(stmt)
+        self.database_connection.execute(stmt)
 
     def _insert(self, request):
         self.logger.info("Inserting row")
         stmt = text(request)
-        return self.database_connection.execute(stmt)
+        self.database_connection.execute(stmt)
 
     def _delete(self, request):
         self.logger.info("Deleting row")
         stmt = text(request)
-        return self.database_connection.execute(stmt)
+        self.database_connection.execute(stmt)
 
     def execute_statement(self, transaction):
         result = []
@@ -40,19 +40,22 @@ class Repository(IRepository):
                 elif query.method == "DELETE":
                     sql_query, select_to_reverse = query.to_sql()
                     stmt = text(select_to_reverse)
-                    data_select = self.database_connection.execute(stmt)
-                    if data_select != None:
-                        result.append(self.create_reverse_query(query, data_select))
+                    result_proxy = self.database_connection.execute(stmt)
+                    result_set = result_proxy.cursor.fetchall()
+                    if len(result_set) != 0:
+                        result.append(self.create_reverse_query(query, result_set))
                     self._delete(sql_query)
                 else:
                     sql_query, select_to_reverse = query.to_sql()
                     stmt = text(select_to_reverse)
-                    data_select = self.database_connection.execute(stmt)
-                    if data_select != None:
-                        result.append(self.create_reverse_query(query, data_select))
+                    result_proxy = self.database_connection.execute(stmt)
+                    result_set = result_proxy.cursor.fetchall()
+                    if len(result_set) != 0:
+                        result.append(self.create_reverse_query(query, result_set))
                     self._update(sql_query)
             except:
                 self.logger.error("Transaction failed!")
+                return jsonify(success=False)
         return result
 
     def rollback(self):
@@ -64,7 +67,6 @@ class Repository(IRepository):
         self.app.logger.info("Performing transaction commit")
         try:
             self.database_connection.commit()
-            return jsonify(success=True)
         except:
             return jsonify(success=False)
 
@@ -74,22 +76,23 @@ class Repository(IRepository):
             values = {}
         if transaction.method == "INSERT":
             where = ""
-            name_of_values = list(transaction.values.values())
-            for i in range(0, len(name_of_values)):
-                where += name_of_values[i] + "=" + values[0][i] + " AND "
+            column_names = list(transaction.values.keys())
+            old_values = list(transaction.values.values())
+            for i in range(0, len(old_values)):
+                where += str(column_names[i]) + "=" + str(old_values[i]) + " AND "
             where = where[:-4]
 
-            result = "DELETE FROM " + transaction.table_name + " where " + where
+            result = "DELETE FROM " + transaction.table_name + " WHERE " + where
 
             return result
         elif transaction.method == "UPDATE":
-            name_of_values = list(transaction.values.values())
+            old_columns = list(transaction.values.keys())
             result = "UPDATE " + transaction.table_name + " SET "
-            for i in range(0, len(name_of_values)):
+            for i in range(0, len(values[0])):
                 if isinstance(values[0][i], int):
-                    result += name_of_values[i] + " = " + str(values[0][i]) + ","
+                    result += str(old_columns[i]) + "=" + str(values[0][i]) + ","
                 else:
-                    result += name_of_values[i] + " = '" + values[0][i] + "',"
+                    result += str(old_columns[i]) + "='" + str(values[0][i]) + "',"
             result = result[:-1]
 
             if transaction.where is not None:
@@ -97,9 +100,8 @@ class Repository(IRepository):
 
             return result
         else:
-            keys = ','.join(transaction.values.keys())
-            result = transaction.method + " INTO " + transaction.table_name + "(" + keys + ")" + " VALUES ("
-            for i in range(0, len(keys)):
+            result = "INSERT INTO " + transaction.table_name + " VALUES ("
+            for i in range(0, len(values[0])):
                 if isinstance(values[0][i], int):
                     result += str(values[0][i]) + ","
                 else:
@@ -133,18 +135,26 @@ def get_where(statement):
 class RepoCoordinator:
     def __init__(self, repository: Repository):
         self.repository = repository
-        self.data_to_reverse = []
+        self.statements = []
 
     def rollback(self):
-        self.repository.rollback()
+        try:
+            self.repository.rollback()
+        except:
+            return False
+        return True
 
     def commit(self):
-        self.repository.commit()
+        self.repository.execute_statement(self.statements)
+        try:
+            self.repository.commit()
+        except:
+            return False
+        return True
 
     def execute_transaction(self, transaction):
-        statements = []
         for statement in transaction['statements']:
-            statements.append(
+            self.statements.append(
                 Query(
                     method=statement['method'],
                     table_name=statement['table_name'],
@@ -152,4 +162,4 @@ class RepoCoordinator:
                     where=get_where(statement)
                 )
             )
-        self.data_to_reverse = self.repository.execute_statement(statements)
+        return self.repository.execute_statement(self.statements)

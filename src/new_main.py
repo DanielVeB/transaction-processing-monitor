@@ -14,7 +14,11 @@ webservice_first = WebServiceBuilder() \
 
 coordinator.add_service(webservice_first)
 
-query1 = Query("DELETE", "test", {}, "id=10")
+query1 = Query("DELETE", "test", {}, "idtest=1")
+query2 = Query("INSERT", "test", {"idtest": 64, "value": 90})
+query3 = Query("UPDATE", "test", {"value": 81}, "idtest=4")
 webservice_first.add_query(query1)
+webservice_first.add_query(query2)
+webservice_first.add_query(query3)
 coordinator.execute_transaction()
 coordinator.commit()

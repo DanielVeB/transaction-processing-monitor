@@ -25,19 +25,18 @@ def execute_transaction():
     return jsonify(result)
 
 
-# Should this methods have jsonify return?
 # Commit
 @app.route('/commit', methods=['POST'])
 def commit():
     result = repoCoordinator.commit()
-    return result.status_code
+    return jsonify(success=result)
 
 
 # Rollback
 @app.route('/rollback', methods=['POST'])
 def rollback():
     result = repoCoordinator.rollback()
-    return result.status_code
+    return jsonify(success=result)
 
 
 if __name__ == '__main__':
