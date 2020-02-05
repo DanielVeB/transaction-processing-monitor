@@ -1,6 +1,6 @@
-import json
 import logging
 
+from flask import jsonify
 from sqlalchemy import text
 
 from src.library.interfaces import IRepository
@@ -29,27 +29,27 @@ class Repository(IRepository):
         stmt = text(request)
         return self.database_connection.execute(stmt)
 
-    def execute_statement(self, statement):
+    def execute_statement(self, transaction):
         result = []
-        for transaction in statement["statements"]:
+        for query in transaction:
             try:
-                if transaction.method == "INSERT":
-                    sql_query, select_to_reverse = transaction.to_sql()
+                if query.method == "INSERT":
+                    sql_query, select_to_reverse = query.to_sql()
                     stmt = text(select_to_reverse)
-                    data_select = self.database_connection.execute(stmt)
-                    result.append(self.create_reverse_query(transaction, data_select))
+                    # data_select = self.database_connection.execute(stmt)
+                    # result.append(self.create_reverse_query(query, data_select))
                     self._insert(sql_query)
-                elif transaction.method == "DELETE":
-                    sql_query, select_to_reverse = transaction.to_sql()
+                elif query.method == "DELETE":
+                    sql_query, select_to_reverse = query.to_sql()
                     stmt = text(select_to_reverse)
                     data_select = self.database_connection.execute(stmt)
-                    result.append(self.create_reverse_query(transaction, data_select))
+                    result.append(self.create_reverse_query(query, data_select))
                     self._delete(sql_query)
                 else:
-                    sql_query, select_to_reverse = transaction.to_sql()
+                    sql_query, select_to_reverse = query.to_sql()
                     stmt = text(select_to_reverse)
                     data_select = self.database_connection.execute(stmt)
-                    result.append(self.create_reverse_query(transaction, data_select))
+                    result.append(self.create_reverse_query(query, data_select))
                     self._update(sql_query)
             except:
                 self.logger.error("Transaction failed!")
@@ -58,10 +58,15 @@ class Repository(IRepository):
     def rollback(self):
         self.app.logger.warning("Performing transaction rollback")
         self.database_connection.rollback()
+        return jsonify(success=True)
 
     def commit(self):
         self.app.logger.info("Performing transaction commit")
-        self.database_connection.commit()
+        try:
+            self.database_connection.commit()
+            return jsonify(success=True)
+        except:
+            return jsonify(success=False)
 
     @staticmethod
     def create_reverse_query(transaction, values=None):
@@ -110,10 +115,8 @@ def get_values(statement):
     try:
         values_dict = {}
         values = statement['values']
-        for value in values:
-            key = value['key']
-            val = value['value']
-            values_dict[key] = val
+        for key, value in values.items():
+            values_dict[key] = value
         return values_dict
     except:
         return {}
@@ -127,7 +130,6 @@ def get_where(statement):
 
 
 class RepoCoordinator:
-
     def __init__(self, repository: Repository):
         self.repository = repository
         self.data_to_reverse = []
@@ -141,7 +143,6 @@ class RepoCoordinator:
     def execute_transaction(self, transaction):
         statements = []
         for statement in transaction['statements']:
-            statement = json.loads(statement)
             statements.append(
                 Query(
                     method=statement['method'],
@@ -150,5 +151,4 @@ class RepoCoordinator:
                     where=get_where(statement)
                 )
             )
-            statements.append(statement)
         self.data_to_reverse = self.repository.execute_statement(statements)

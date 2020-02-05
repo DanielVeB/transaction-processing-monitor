@@ -24,7 +24,7 @@ class Query:
     method: str
     table_name: str
     # field_name : value
-    values: {}
+    values: [{}]
     # SQL statement
     where: str = None
 
@@ -62,15 +62,11 @@ class Query:
         else:
             keys = ','.join(self.values.keys())
             result = "DELETE FROM " + self.table_name + " WHERE " + self.where
-            select = "SELECT " + keys + " FROM " + self.table_name
+            select = "SELECT " + keys + " FROM " + self.table_name + " WHERE " + self.where
 
         return result, select
 
 
 class QueryEncoder(JSONEncoder):
     def default(self, query):
-        return {
-            "method": query.method,
-            "table_name": query.table_name,
-            "values": ([{'key': k, 'value': v} for k, v in query.values.items()])
-        }
+        return query.__dict__
