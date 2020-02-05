@@ -73,13 +73,10 @@ class Query:
 
 @dataclass
 class QueryBuilder:
-    # INSERT, UPDATE or DELETE
-    _method: str
-    _table_name: str
-    # field_name : value
-    _values: {}
-    # SQL statement
-    _where: str = None
+    _method: str = None
+    _table_name: str = None
+    _values: {} = None
+    _where: str = ""
 
     def with_method(self, method):
         self._method = method
@@ -100,6 +97,8 @@ class QueryBuilder:
     def build(self):
         if vars(self).values() is None:
             raise MissingParametersException
+        if self._where == "":
+            self._where = None
         return Query(self._method, self._table_name, self._values, self._where)
 
 class QueryEncoder(JSONEncoder):
