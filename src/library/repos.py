@@ -90,7 +90,7 @@ class Repository(IRepository):
         elif transaction.method == "UPDATE":
             update_elements = []
             old_columns = list(transaction.values.keys())
-            for j in range(0, values):
+            for j in range(0, len(values)):
                 result = "UPDATE " + transaction.table_name + " SET "
                 for i in range(0, len(values[j])):
                     if isinstance(values[j][i], int):
@@ -105,7 +105,7 @@ class Repository(IRepository):
             return update_elements
         else:
             insert_elements = []
-            for j in range(0, values):
+            for j in range(0, len(values)):
                 result = "INSERT INTO " + transaction.table_name + " VALUES ("
                 for i in range(0, len(values[j])):
                     if isinstance(values[j][i], int):
@@ -150,6 +150,7 @@ class RepoCoordinator:
             self.repository.rollback()
         except:
             return False
+        self.statements.clear()
         return True
 
     def commit(self):
@@ -158,6 +159,8 @@ class RepoCoordinator:
             self.repository.commit()
         except:
             return False
+        self.reverse.clear()
+        self.statements.clear()
         return True
 
     def execute_transaction(self, transaction):
@@ -179,6 +182,10 @@ class RepoCoordinator:
 
     def _execute_reverse(self, transactions):
         for query in transactions:
-            self.repository.reverse(query)
+            if isinstance(query, list):
+                for subquery in query:
+                    self.repository.reverse(subquery)
+            else:
+                self.repository.reverse(query)
         self.repository.commit()
         self.repository.database_connection.close()
