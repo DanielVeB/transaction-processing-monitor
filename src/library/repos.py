@@ -41,13 +41,15 @@ class Repository(IRepository):
                     sql_query, select_to_reverse = query.to_sql()
                     stmt = text(select_to_reverse)
                     data_select = self.database_connection.execute(stmt)
-                    result.append(self.create_reverse_query(query, data_select))
+                    if data_select != None:
+                        result.append(self.create_reverse_query(query, data_select))
                     self._delete(sql_query)
                 else:
                     sql_query, select_to_reverse = query.to_sql()
                     stmt = text(select_to_reverse)
                     data_select = self.database_connection.execute(stmt)
-                    result.append(self.create_reverse_query(query, data_select))
+                    if data_select != None:
+                        result.append(self.create_reverse_query(query, data_select))
                     self._update(sql_query)
             except:
                 self.logger.error("Transaction failed!")
