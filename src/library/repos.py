@@ -35,9 +35,7 @@ class Repository(IRepository):
             try:
                 if query.method == "INSERT":
                     sql_query, select_to_reverse = query.to_sql()
-                    stmt = text(select_to_reverse)
-                    # data_select = self.database_connection.execute(stmt)
-                    # result.append(self.create_reverse_query(query, data_select))
+                    result.append(self.create_reverse_query(query))
                     self._insert(sql_query)
                 elif query.method == "DELETE":
                     sql_query, select_to_reverse = query.to_sql()

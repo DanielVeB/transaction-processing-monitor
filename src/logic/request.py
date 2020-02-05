@@ -24,7 +24,7 @@ class Query:
     method: str
     table_name: str
     # field_name : value
-    values: [{}]
+    values: {}
     # SQL statement
     where: str = None
 
