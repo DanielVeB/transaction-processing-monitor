@@ -1,7 +1,6 @@
+from dataclasses import dataclass
 from json import JSONEncoder
 from uuid import UUID
-
-from dataclasses import dataclass
 
 from src.library.execptions import MissingParametersException
 
@@ -100,6 +99,7 @@ class QueryBuilder:
         if self._where == "":
             self._where = None
         return Query(self._method, self._table_name, self._values, self._where)
+
 
 class QueryEncoder(JSONEncoder):
     def default(self, query):

@@ -1,6 +1,7 @@
 import json
 import logging
 
+from MySQLdb._exceptions import IntegrityError
 from flask import jsonify
 from sqlalchemy import text
 
@@ -69,7 +70,7 @@ class Repository(IRepository):
         self.app.logger.info("Performing transaction commit")
         try:
             self.database_connection.commit()
-        except:
+        except TransactionException:
             raise TransactionException
 
     @staticmethod
@@ -121,24 +122,6 @@ class Repository(IRepository):
         self.database_connection.execute(text(statement))
 
 
-def get_values(statement):
-    try:
-        values_dict = {}
-        values = statement['values']
-        for key, value in values.items():
-            values_dict[key] = value
-        return values_dict
-    except:
-        return {}
-
-
-def get_where(statement):
-    try:
-        return statement['where']
-    except:
-        return None
-
-
 class RepoCoordinator:
     def __init__(self, repository: Repository):
         self.repository = repository
@@ -148,15 +131,18 @@ class RepoCoordinator:
     def rollback(self):
         try:
             self.repository.rollback()
+            self.repository.database_connection.close()
         except:
             return False
         self.statements.clear()
+        self.reverse.clear()
         return True
 
     def commit(self):
         self.repository.execute_statement(self.statements)
         try:
             self.repository.commit()
+            self.repository.database_connection.close()
         except:
             return False
         self.reverse.clear()
@@ -168,17 +154,21 @@ class RepoCoordinator:
             reverse = transaction['reverse']
             self._execute_reverse(reverse)
         except KeyError:
-            content = json.loads(transaction['statements'])
-            for statement in content:
-                self.statements.append(
-                    Query(
-                        method=statement['method'],
-                        table_name=statement['table_name'],
-                        values=get_values(statement),
-                        where=get_where(statement)
+            try:
+                content = json.loads(transaction['statements'])
+                for statement in content:
+                    self.statements.append(
+                        Query(
+                            method=statement['method'],
+                            table_name=statement['table_name'],
+                            values=_get_values(statement),
+                            where=_get_where(statement)
+                        )
                     )
-                )
-            return self.repository.execute_statement(self.statements)
+                reverse_queries = self.repository.execute_statement(self.statements)
+                return reverse_queries
+            except Exception:
+                raise IntegrityError
 
     def _execute_reverse(self, transactions):
         for query in transactions:
@@ -189,3 +179,21 @@ class RepoCoordinator:
                 self.repository.reverse(query)
         self.repository.commit()
         self.repository.database_connection.close()
+
+
+def _get_values(statement):
+    try:
+        values_dict = {}
+        values = statement['values']
+        for key, value in values.items():
+            values_dict[key] = value
+        return values_dict
+    except:
+        return {}
+
+
+def _get_where(statement):
+    try:
+        return statement['where']
+    except:
+        return None

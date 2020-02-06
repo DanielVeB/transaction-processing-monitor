@@ -61,7 +61,7 @@ class Coordinator(IUnitOfWork):
             except (KeyError, QueryException):
                 self.logger.error("Error while executing query for %s", webservice.url)
                 self._rollback()
-                raise TransactionException(webservice_url=webservice.url)
+                raise TransactionException
 
     def commit(self):
         self.logger.info("Committing changes")
@@ -79,13 +79,14 @@ class Coordinator(IUnitOfWork):
             except CommitException as ex:
                 self.logger.error("Commit failed for %s", ex.webservice_url)
                 self._rollback()
-                raise TransactionException(webservice_url=ex.webservice_url)
+                raise TransactionException
 
         self.logger.info("Commit successful!")
         self.logger.info("Clearing query data")
         self._committed_webservice_uuid_list.clear()
         self._changed_webservice_uuid_list.clear()
         self._send_queries_dict.clear()
+        self._clear_queries()
 
     def _rollback(self):
         self.logger.warning("Rolling back changes!")
@@ -109,3 +110,8 @@ class Coordinator(IUnitOfWork):
         self._committed_webservice_uuid_list.clear()
         self._changed_webservice_uuid_list.clear()
         self._send_queries_dict.clear()
+        self._clear_queries()
+
+    def _clear_queries(self):
+        for service in self._webservices_dict.values():
+            service.query_list.clear()

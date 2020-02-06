@@ -10,9 +10,8 @@ class CommitException(Exception):
 
 
 class TransactionException(Exception):
-    def __init__(self, webservice_url):
-        self.webservice_url = webservice_url
-        self.message = "Transaction failed for: " + webservice_url
+    def __init__(self):
+        self.message = "Transaction failed for!"
         super().__init__(self.message)
 
 
