@@ -13,8 +13,8 @@ from src.logic.request import Query
 class Repository(IRepository):
     logger = logging.getLogger(__name__)
 
-    def __init__(self, database_connection, app):
-        self.database_connection = database_connection
+    def __init__(self, session, app):
+        self.database_connection = session()
         self.app = app
 
     def _update(self, request):
@@ -125,39 +125,28 @@ class Repository(IRepository):
 class RepoCoordinator:
     def __init__(self, repository: Repository):
         self.repository = repository
-        self.statements = []
-        self.reverse = []
 
     def rollback(self):
         try:
             self.repository.rollback()
-            self.repository.database_connection.close()
         except:
             return False
-        self.statements.clear()
-        self.reverse.clear()
         return True
 
     def commit(self):
-        self.repository.execute_statement(self.statements)
         try:
             self.repository.commit()
-            self.repository.database_connection.close()
         except:
             return False
-        self.reverse.clear()
-        self.statements.clear()
         return True
 
     def execute_transaction(self, transaction):
-        try:
-            reverse = transaction['reverse']
-            self._execute_reverse(reverse)
-        except KeyError:
+        if 'statements' in transaction.keys():
             try:
                 content = json.loads(transaction['statements'])
+                statements = []
                 for statement in content:
-                    self.statements.append(
+                    statements.append(
                         Query(
                             method=statement['method'],
                             table_name=statement['table_name'],
@@ -165,10 +154,15 @@ class RepoCoordinator:
                             where=_get_where(statement)
                         )
                     )
-                reverse_queries = self.repository.execute_statement(self.statements)
+                reverse_queries = self.repository.execute_statement(statements)
                 return reverse_queries
-            except Exception:
-                raise IntegrityError
+            except IntegrityError:
+                return jsonify(success=False)
+        elif 'reverse' in transaction.keys():
+            reverse = transaction['reverse']
+            self._execute_reverse(reverse)
+        else:
+            return jsonify(success=False)
 
     def _execute_reverse(self, transactions):
         for query in transactions:
