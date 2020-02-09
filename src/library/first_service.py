@@ -1,4 +1,5 @@
 import logging
+from http.client import HTTPException
 
 from flask import Flask, request, jsonify
 
@@ -11,7 +12,7 @@ logging.basicConfig(level=logging.DEBUG,
 
 app = Flask(__name__)
 
-url = "mysql://admin:admin1234@transaction-moniotr.cyijtv3eudvp.eu-west-2.rds.amazonaws.com:3306/test"
+url = "mysql://admin:admin1234@localhost:3306/test"
 database_service = DatabaseService(app, url)
 repoCoordinator = RepoCoordinator(database_service.create_repository())
 
@@ -26,15 +27,15 @@ def execute_transaction():
 # Commit
 @app.route('/commit', methods=['POST'])
 def commit():
-    result = repoCoordinator.commit()
-    return jsonify(success=result)
+    repoCoordinator.commit()
+    return jsonify(success=True)
 
 
 # Rollback
 @app.route('/rollback', methods=['POST'])
 def rollback():
-    result = repoCoordinator.rollback()
-    return jsonify(success=result)
+    repoCoordinator.rollback()
+    return jsonify(success=True)
 
 
 if __name__ == '__main__':

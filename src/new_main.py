@@ -4,6 +4,14 @@ from src.logic.webservices import WebServiceBuilder
 
 coordinator = Coordinator()
 
+first_webservice = WebServiceBuilder() \
+    .with_host("localhost") \
+    .with_port("9035") \
+    .rollback_endpoint("/rollback") \
+    .with_commit_endpoint("/commit") \
+    .with_send_transaction_endpoint("/execute") \
+    .build()
+
 second_webservice = WebServiceBuilder() \
     .with_host("localhost") \
     .with_port("9030") \
@@ -12,15 +20,23 @@ second_webservice = WebServiceBuilder() \
     .with_send_transaction_endpoint("/execute") \
     .build()
 
+coordinator.add_service(first_webservice)
 coordinator.add_service(second_webservice)
 
-second_query = QueryBuilder() \
+query_insert = QueryBuilder() \
     .with_method("INSERT") \
     .with_table_name("test") \
-    .with_values({"idtest": 7787, "value": 999}) \
+    .with_values({"idtest": 77247, "value": 999}) \
     .build()
 
-second_webservice.add_query(second_query)
+query_delete = QueryBuilder() \
+    .with_method("DELETE") \
+    .with_table_name("test") \
+    .with_where("idtest=77237") \
+    .build()
+
+first_webservice.add_query(query_insert)
+second_webservice.add_query(query_insert)
 
 try:
     coordinator.execute_transaction()

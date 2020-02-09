@@ -11,7 +11,7 @@ class CommitException(Exception):
 
 class TransactionException(Exception):
     def __init__(self):
-        self.message = "Transaction failed for!"
+        self.message = "Transaction failed!"
         super().__init__(self.message)
 
 

@@ -1,9 +1,9 @@
 import json
 import logging
 
-from MySQLdb._exceptions import IntegrityError
-from flask import jsonify
+from flask import jsonify, abort
 from sqlalchemy import text
+from sqlalchemy.exc import OperationalError, IntegrityError
 
 from src.library.execptions import TransactionException
 from src.library.interfaces import IRepository
@@ -70,7 +70,7 @@ class Repository(IRepository):
         self.app.logger.info("Performing transaction commit")
         try:
             self.database_connection.commit()
-        except TransactionException:
+        except (TransactionException, OperationalError):
             raise TransactionException
 
     @staticmethod
@@ -129,16 +129,14 @@ class RepoCoordinator:
     def rollback(self):
         try:
             self.repository.rollback()
-        except:
-            return False
-        return True
+        except IntegrityError:
+            return abort(500)
 
     def commit(self):
         try:
             self.repository.commit()
-        except:
-            return False
-        return True
+        except IntegrityError:
+            return abort(500)
 
     def execute_transaction(self, transaction):
         if 'statements' in transaction.keys():
@@ -157,12 +155,12 @@ class RepoCoordinator:
                 reverse_queries = self.repository.execute_statement(statements)
                 return reverse_queries
             except IntegrityError:
-                return jsonify(success=False)
+                abort(500)
         elif 'reverse' in transaction.keys():
             reverse = transaction['reverse']
             self._execute_reverse(reverse)
         else:
-            return jsonify(success=False)
+            abort(500)
 
     def _execute_reverse(self, transactions):
         for query in transactions:
