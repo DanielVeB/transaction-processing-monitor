@@ -91,17 +91,20 @@ class Repository(IRepository):
         elif transaction.method == "UPDATE":
             update_elements = []
             old_columns = list(transaction.values.keys())
+            new_values = list(transaction.values.values())
             for j in range(0, len(values)):
                 result = "UPDATE " + transaction.table_name + " SET "
-                for i in range(0, len(values[j])):
-                    if isinstance(values[j][i], int):
-                        result += str(old_columns[i]) + "=" + str(values[j][i]) + ","
+                for i in range(0, len(new_values)):
+                    if isinstance(values[i], int):
+                        result += str(old_columns[i]) + "=" + str(new_values[i]) + ","
                     else:
-                        result += str(old_columns[i]) + "='" + str(values[j][i]) + "',"
+                        result += str(old_columns[i]) + "='" + str(new_values[i]) + "',"
                 result = result[:-1]
 
-                if transaction.where is not None:
-                    result += " WHERE " + transaction.where
+                for i in range(0, len(old_columns)):
+                    where += str(old_columns[i]) + "=" + str(values[0][i]) + " AND "
+                where = where[:-4]
+                result += " WHERE " + where
                 update_elements.append(result)
             return update_elements
         else:
