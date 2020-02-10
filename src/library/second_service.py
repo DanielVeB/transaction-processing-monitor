@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG,
 
 app = Flask(__name__)
 
-url = "mysql://root:root@localhost:3306/test"
+url = "mysql://root:root@localhost:3307/test"
 database_service = DatabaseService(app, url)
 repoCoordinator = RepoCoordinator(database_service.create_repository())
 
@@ -20,22 +20,21 @@ repoCoordinator = RepoCoordinator(database_service.create_repository())
 def execute_transaction():
     content = request.get_json()
     result = repoCoordinator.execute_transaction(content)
-    repoCoordinator.repository.database_connection.close()
     return jsonify(result)
 
 
 # Commit
 @app.route('/commit', methods=['POST'])
 def commit():
-    result = repoCoordinator.commit()
-    return jsonify(success=result)
+    repoCoordinator.commit()
+    return jsonify(success=True)
 
 
 # Rollback
 @app.route('/rollback', methods=['POST'])
 def rollback():
-    result = repoCoordinator.rollback()
-    return jsonify(success=result)
+    repoCoordinator.rollback()
+    return jsonify(success=True)
 
 
 if __name__ == '__main__':

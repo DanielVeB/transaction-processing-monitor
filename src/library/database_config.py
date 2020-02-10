@@ -1,7 +1,7 @@
 import logging
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.orm import sessionmaker
 
 from src.library.interfaces import IDatabaseService
 from src.library.repos import Repository
@@ -23,7 +23,7 @@ class DatabaseService(IDatabaseService):
         self.flask_server.config['SQLALCHEMY_DATABASE_URI'] = self.url
         database_connection = SQLAlchemy(self.flask_server)
         engine = database_connection.engine
-        self.repository = Repository(scoped_session(sessionmaker(autocommit=False,
-                                                                 autoflush=False,
-                                                                 bind=engine)), self.flask_server)
+        self.repository = Repository(sessionmaker(autocommit=False,
+                                                  autoflush=False,
+                                                  bind=engine), self.flask_server)
         return self.repository
