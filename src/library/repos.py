@@ -51,7 +51,7 @@ class Repository(IRepository):
         if len(result_set) != 0:
             result.append(delete_query.reverse(result_set))
         self.logger.info("Deleting row")
-        stmt = text(request)
+        stmt = text(sql_query)
         self.database_connection.execute(stmt)
         return result
 

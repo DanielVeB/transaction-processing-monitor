@@ -32,11 +32,18 @@ query_insert = QueryBuilder() \
 query_delete = QueryBuilder() \
     .with_method("DELETE") \
     .with_table_name("test") \
-    .with_where("idtest=77237") \
+    .with_where("idtest=6787") \
     .build()
 
-first_webservice.add_query(query_insert)
-second_webservice.add_query(query_insert)
+query_update = QueryBuilder() \
+    .with_method("UPDATE") \
+    .with_table_name("test") \
+    .with_values({"value": 6787}) \
+    .with_where("idtest=6787") \
+    .build()
+
+first_webservice.add_query(query_update)
+second_webservice.add_query(query_update)
 
 try:
     coordinator.execute_transaction()
