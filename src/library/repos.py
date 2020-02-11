@@ -7,7 +7,7 @@ from sqlalchemy.exc import OperationalError, IntegrityError
 
 from src.library.execptions import TransactionException
 from src.library.interfaces import IRepository
-from src.logic.request import Query
+from src.logic.request import Query, UpdateQuery, InsertQuery, DeleteQuery
 
 
 class Repository(IRepository):
@@ -18,44 +18,53 @@ class Repository(IRepository):
         self.app = app
 
     def _update(self, request):
+        result = []
+        update_query = UpdateQuery(request)
+        sql_query, select_to_reverse = update_query.to_sql()
+        stmt = text(select_to_reverse)
+        result_proxy = self.database_connection.execute(stmt)
+        result_set = result_proxy.cursor.fetchall()
+        if len(result_set) != 0:
+            result.append(update_query.reverse(result_set))
         self.logger.info("Updating row")
-        stmt = text(request)
+        stmt = text(sql_query)
         self.database_connection.execute(stmt)
+        return result
 
     def _insert(self, request):
+        result = []
+        insert_query = InsertQuery(request)
+        sql_query = insert_query.to_sql()
+        result.append(insert_query.reverse(None))
         self.logger.info("Inserting row")
-        stmt = text(request)
+        stmt = text(sql_query)
         self.database_connection.execute(stmt)
+        return result
 
     def _delete(self, request):
+        result = []
+        delete_query = DeleteQuery(request)
+        sql_query, select_to_reverse = delete_query.to_sql()
+        stmt = text(select_to_reverse)
+        result_proxy = self.database_connection.execute(stmt)
+        result_set = result_proxy.cursor.fetchall()
+        if len(result_set) != 0:
+            result.append(delete_query.reverse(result_set))
         self.logger.info("Deleting row")
         stmt = text(request)
         self.database_connection.execute(stmt)
+        return result
 
     def execute_statement(self, transaction):
         result = []
         for query in transaction:
             try:
                 if query.method == "INSERT":
-                    sql_query, select_to_reverse = query.to_sql()
-                    result.append(self.create_reverse_query(query))
-                    self._insert(sql_query)
+                    result += self._insert(query)
                 elif query.method == "DELETE":
-                    sql_query, select_to_reverse = query.to_sql()
-                    stmt = text(select_to_reverse)
-                    result_proxy = self.database_connection.execute(stmt)
-                    result_set = result_proxy.cursor.fetchall()
-                    if len(result_set) != 0:
-                        result.append(self.create_reverse_query(query, result_set))
-                    self._delete(sql_query)
+                    result += self._delete(query)
                 else:
-                    sql_query, select_to_reverse = query.to_sql()
-                    stmt = text(select_to_reverse)
-                    result_proxy = self.database_connection.execute(stmt)
-                    result_set = result_proxy.cursor.fetchall()
-                    if len(result_set) != 0:
-                        result.append(self.create_reverse_query(query, result_set))
-                    self._update(sql_query)
+                    result += self._update(query)
             except:
                 self.logger.error("Transaction failed!")
                 raise TransactionException
@@ -72,51 +81,6 @@ class Repository(IRepository):
             self.database_connection.commit()
         except (TransactionException, OperationalError):
             raise TransactionException
-
-    @staticmethod
-    def create_reverse_query(transaction, values=None):
-        if values is None:
-            values = {}
-        if transaction.method == "INSERT":
-            where = ""
-            column_names = list(transaction.values.keys())
-            old_values = list(transaction.values.values())
-            for i in range(0, len(old_values)):
-                where += str(column_names[i]) + "=" + str(old_values[i]) + " AND "
-            where = where[:-4]
-
-            result = "DELETE FROM " + transaction.table_name + " WHERE " + where
-
-            return result
-        elif transaction.method == "UPDATE":
-            update_elements = []
-            old_columns = list(transaction.values.keys())
-            for j in range(0, len(values)):
-                result = "UPDATE " + transaction.table_name + " SET "
-                for i in range(0, len(values[j])):
-                    if isinstance(values[j][i], int):
-                        result += str(old_columns[i]) + "=" + str(values[j][i]) + ","
-                    else:
-                        result += str(old_columns[i]) + "='" + str(values[j][i]) + "',"
-                result = result[:-1]
-
-                if transaction.where is not None:
-                    result += " WHERE " + transaction.where
-                update_elements.append(result)
-            return update_elements
-        else:
-            insert_elements = []
-            for j in range(0, len(values)):
-                result = "INSERT INTO " + transaction.table_name + " VALUES ("
-                for i in range(0, len(values[j])):
-                    if isinstance(values[j][i], int):
-                        result += str(values[j][i]) + ","
-                    else:
-                        result += "'" + values[j][i] + "',"
-                result = result[:-1]
-                result += ")"
-                insert_elements.append(result)
-            return insert_elements
 
     def reverse(self, statement):
         self.database_connection.execute(text(statement))

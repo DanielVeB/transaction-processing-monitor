@@ -26,7 +26,7 @@ coordinator.add_service(second_webservice)
 query_insert = QueryBuilder() \
     .with_method("INSERT") \
     .with_table_name("test") \
-    .with_values({"idtest": 77247, "value": 999}) \
+    .with_values({"idtest": 6787, "value": 999}) \
     .build()
 
 query_delete = QueryBuilder() \

@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from json import JSONEncoder
 from uuid import UUID
@@ -20,6 +21,112 @@ class Transaction:
         }
 
 
+class QueryInterface(ABC):
+    @abstractmethod
+    def reverse(self, old_data):
+        raise NotImplementedError
+
+    @abstractmethod
+    def to_sql(self):
+        raise NotImplementedError
+
+
+class UpdateQuery(QueryInterface):
+    def __init__(self, query):
+        self.query = query
+
+    def reverse(self, old_data):
+        update_elements = []
+        old_columns = list(self.query.values.keys())
+        for j in range(0, len(old_data)):
+            result = "UPDATE " + self.query.table_name + " SET "
+            for i in range(0, len(old_data[j])):
+                if isinstance(old_data[j][i], int):
+                    result += str(old_columns[i]) + "=" + str(old_data[j][i]) + ","
+                else:
+                    result += str(old_columns[i]) + "='" + str(old_data[j][i]) + "',"
+            result = result[:-1]
+
+            if self.query.where is not None:
+                result += " WHERE " + self.query.where
+            update_elements.append(result)
+        return update_elements
+
+    def to_sql(self):
+        keys = list(self.query.values.keys())
+        values = list(self.query.values.values())
+        result = self.query.method + " " + self.query.table_name + " SET "
+        for i in range(0, len(values)):
+            if isinstance(values[i], int):
+                result += keys[i] + "=" + str(values[i]) + ","
+            else:
+                result += keys[i] + "='" + values[i] + "',"
+        result = result[:-1]
+        if self.query.where is not None:
+            result += " WHERE " + self.query.where
+        keys = ','.join(self.query.values.keys())
+        select = "SELECT " + keys + " FROM " + self.query.table_name + " WHERE " + self.query.where
+
+        return result, select
+
+
+class InsertQuery(QueryInterface):
+    def __init__(self, query):
+        self.query = query
+
+    def reverse(self, old_data):
+        where = ""
+        column_names = list(self.query.values.keys())
+        old_values = list(self.query.values.values())
+        for i in range(0, len(old_values)):
+            where += str(column_names[i]) + "=" + str(old_values[i]) + " AND "
+        where = where[:-4]
+
+        result = "DELETE FROM " + self.query.table_name + " WHERE " + where
+
+        return result
+
+    def to_sql(self):
+        keys = ','.join(self.query.values.keys())
+        values = list(self.query.values.values())
+        result = self.query.method + " INTO " + self.query.table_name + "(" + keys + ")" + " VALUES ("
+        for i in range(0, len(values)):
+            if isinstance(values[i], int):
+                result += str(values[i]) + ","
+            else:
+                result += "'" + values[i] + "',"
+        result = result[:-1]
+        result += ") "
+        if self.query.where is not None:
+            result += " WHERE " + self.query.where
+
+        return result
+
+
+class DeleteQuery(QueryInterface):
+    def __init__(self, query):
+        self.query = query
+
+    def reverse(self, old_data):
+        insert_elements = []
+        for j in range(0, len(old_data)):
+            result = "INSERT INTO " + self.query.table_name + " VALUES ("
+            for i in range(0, len(old_data[j])):
+                if isinstance(old_data[j][i], int):
+                    result += str(old_data[j][i]) + ","
+                else:
+                    result += "'" + old_data[j][i] + "',"
+            result = result[:-1]
+            result += ")"
+            insert_elements.append(result)
+        return insert_elements
+
+    def to_sql(self):
+        result = "DELETE FROM " + self.query.table_name + " WHERE " + self.query.where
+        select = "SELECT * FROM " + self.query.table_name + " WHERE " + self.query.where
+        return result, select
+
+
 @dataclass
 class Query:
     # INSERT, UPDATE or DELETE
@@ -29,45 +136,6 @@ class Query:
     values: {}
     # SQL statement
     where: str = None
-
-    def to_sql(self):
-        result = ""
-        select = ""
-
-        if self.method == "INSERT":
-            keys = ','.join(self.values.keys())
-            values = list(self.values.values())
-            result = self.method + " INTO " + self.table_name + "(" + keys + ")" + " VALUES ("
-            for i in range(0, len(values)):
-                if isinstance(values[i], int):
-                    result += str(values[i]) + ","
-                else:
-                    result += "'" + values[i] + "',"
-            result = result[:-1]
-            result += ") "
-            if self.where is not None:
-                result += " WHERE " + self.where
-
-        elif self.method == "UPDATE":
-            keys = list(self.values.keys())
-            values = list(self.values.values())
-            result = self.method + " " + self.table_name + " SET "
-            for i in range(0, len(values)):
-                if isinstance(values[i], int):
-                    result += keys[i] + "=" + str(values[i]) + ","
-                else:
-                    result += keys[i] + "='" + values[i] + "',"
-            result = result[:-1]
-            if self.where is not None:
-                result += " WHERE " + self.where
-            keys = ','.join(self.values.keys())
-            select = "SELECT " + keys + " FROM " + self.table_name + " WHERE " + self.where
-        else:
-            keys = ','.join(self.values.keys())
-            result = "DELETE FROM " + self.table_name + " WHERE " + self.where
-            select = "SELECT * FROM " + self.table_name + " WHERE " + self.where
-
-        return result, select
 
 
 @dataclass
