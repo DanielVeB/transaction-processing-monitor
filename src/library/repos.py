@@ -101,11 +101,12 @@ class Repository(IRepository):
                         result += str(old_columns[i]) + "='" + str(new_values[i]) + "',"
                 result = result[:-1]
 
-                for i in range(0, len(old_columns)):
-                    where += str(old_columns[i]) + "=" + str(values[0][i]) + " AND "
-                where = where[:-4]
-                result += " WHERE " + where
-                update_elements.append(result)
+            where = ""
+            for i in range(0, len(old_columns)):
+                where += str(old_columns[i]) + "=" + str(values[0][i]) + " AND "
+            where = where[:-4]
+            result += " WHERE " + where
+            update_elements.append(result)
             return update_elements
         else:
             insert_elements = []

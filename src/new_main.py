@@ -20,13 +20,14 @@ second_webservice = WebServiceBuilder() \
     .with_send_transaction_endpoint("/execute") \
     .build()
 
-coordinator.add_service(first_webservice)
 coordinator.add_service(second_webservice)
+coordinator.add_service(first_webservice)
 
 query_insert = QueryBuilder() \
-    .with_method("INSERT") \
+    .with_method("UPDATE") \
     .with_table_name("test") \
-    .with_values({"idtest": 77247, "value": 999}) \
+    .with_values({"value": 567}) \
+    .with_where("value=999") \
     .build()
 
 query_delete = QueryBuilder() \

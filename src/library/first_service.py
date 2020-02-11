@@ -1,5 +1,4 @@
 import logging
-from http.client import HTTPException
 
 from flask import Flask, request, jsonify
 
@@ -12,7 +11,7 @@ logging.basicConfig(level=logging.DEBUG,
 
 app = Flask(__name__)
 
-url = "mysql://admin:admin1234@localhost:3306/test"
+url = "mysql://root@localhost:3306/test"
 database_service = DatabaseService(app, url)
 repoCoordinator = RepoCoordinator(database_service.create_repository())
 
