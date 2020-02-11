@@ -77,14 +77,14 @@ class InsertQueryBuilder(QueryData):
 
 
 class UpdateQueryBuilder(QueryData):
-    method = "INSERT"
+    method = "UPDATE"
 
     def __init__(self):
         super().__init__(self.method)
 
 
 class DeleteQueryBuilder(QueryData):
-    method = "INSERT"
+    method = "DELETE"
 
     def __init__(self):
         super().__init__(self.method)
