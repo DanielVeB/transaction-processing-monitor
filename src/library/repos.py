@@ -82,7 +82,10 @@ class Repository(IRepository):
             column_names = list(transaction.values.keys())
             old_values = list(transaction.values.values())
             for i in range(0, len(old_values)):
-                where += str(column_names[i]) + "=" + str(old_values[i]) + " AND "
+                if isinstance(old_values[i], int):
+                    where += str(column_names[i]) + "=" + str(old_values[i]) + " AND "
+                else:
+                    where += str(column_names[i]) + "='" + str(old_values[i]) + "' AND "
             where = where[:-4]
 
             result = "DELETE FROM " + transaction.table_name + " WHERE " + where
@@ -94,16 +97,20 @@ class Repository(IRepository):
             new_values = list(transaction.values.values())
             for j in range(0, len(values)):
                 result = "UPDATE " + transaction.table_name + " SET "
-                for i in range(0, len(new_values)):
-                    if isinstance(values[i], int):
-                        result += str(old_columns[i]) + "=" + str(new_values[i]) + ","
+                for i in range(0, len(values[j])):
+                    if isinstance(values[j][i], int):
+                        result += str(old_columns[i]) + "=" + str(values[j][i]) + ","
                     else:
-                        result += str(old_columns[i]) + "='" + str(new_values[i]) + "',"
+                        result += str(old_columns[i]) + "='" + str(values[j][i]) + "',"
                 result = result[:-1]
 
             where = ""
+
             for i in range(0, len(old_columns)):
-                where += str(old_columns[i]) + "=" + str(values[0][i]) + " AND "
+                if isinstance(new_values[i], int):
+                    where += str(old_columns[i]) + "=" + str(new_values[i]) + " AND "
+                else:
+                    where += str(old_columns[i]) + "='" + str(new_values[i]) + "' AND "
             where = where[:-4]
             result += " WHERE " + where
             update_elements.append(result)
