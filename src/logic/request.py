@@ -3,9 +3,6 @@ from dataclasses import dataclass
 from json import JSONEncoder
 from uuid import UUID
 
-from src.library.execptions import MissingParametersException
-
-
 @dataclass
 class Transaction:
     repository_id: UUID
@@ -143,37 +140,6 @@ class Query:
     values: {}
     # SQL statement
     where: str = None
-
-
-@dataclass
-class QueryBuilder:
-    _method: str = None
-    _table_name: str = None
-    _values: {} = None
-    _where: str = ""
-
-    def with_method(self, method):
-        self._method = method
-        return self
-
-    def with_table_name(self, table_name):
-        self._table_name = table_name
-        return self
-
-    def with_values(self, values):
-        self._values = values
-        return self
-
-    def with_where(self, where):
-        self._where = where
-        return self
-
-    def build(self):
-        if vars(self).values() is None:
-            raise MissingParametersException
-        if self._where == "":
-            self._where = None
-        return Query(self._method, self._table_name, self._values, self._where)
 
 
 class QueryEncoder(JSONEncoder):
