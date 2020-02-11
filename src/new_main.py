@@ -12,17 +12,11 @@ delete_builder = DeleteQueryBuilder()
 first_webservice = WebServiceBuilder() \
     .with_host("localhost") \
     .with_port("9035") \
-    .rollback_endpoint("/rollback") \
-    .with_commit_endpoint("/commit") \
-    .with_send_transaction_endpoint("/execute") \
     .build()
 
 second_webservice = WebServiceBuilder() \
     .with_host("localhost") \
     .with_port("9030") \
-    .rollback_endpoint("/rollback") \
-    .with_commit_endpoint("/commit") \
-    .with_send_transaction_endpoint("/execute") \
     .build()
 
 coordinator.add_service(second_webservice)

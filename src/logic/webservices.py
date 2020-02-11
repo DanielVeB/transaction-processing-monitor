@@ -10,9 +10,9 @@ from src.logic.request import Query
 class WebServiceBuilder:
     _host: str = None
     _port: str = None
-    _send_transaction_endpoint: str = None
-    _commit_endpoint: str = None
-    _rollback_endpoint: str = None
+    _send_transaction_endpoint: str = "/execute"
+    _commit_endpoint: str = "/commit"
+    _rollback_endpoint: str = "/rollback"
 
     def with_host(self, host):
         self._host = host
