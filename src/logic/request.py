@@ -38,6 +38,7 @@ class UpdateQuery(QueryInterface):
     def reverse(self, old_data):
         update_elements = []
         old_columns = list(self.query.values.keys())
+        new_values = list(self.query.values.values())
         for j in range(0, len(old_data)):
             result = "UPDATE " + self.query.table_name + " SET "
             for i in range(0, len(old_data[j])):
@@ -47,9 +48,15 @@ class UpdateQuery(QueryInterface):
                     result += str(old_columns[i]) + "='" + str(old_data[j][i]) + "',"
             result = result[:-1]
 
-            if self.query.where is not None:
-                result += " WHERE " + self.query.where
-            update_elements.append(result)
+        where = ""
+        for i in range(0, len(old_columns)):
+            if isinstance(new_values[i], int):
+                where += str(old_columns[i]) + "=" + str(new_values[i]) + " AND "
+            else:
+                where += str(old_columns[i]) + "='" + str(new_values[i]) + "' AND "
+        where = where[:-4]
+        result += " WHERE " + where
+        update_elements.append(result)
         return update_elements
 
     def to_sql(self):

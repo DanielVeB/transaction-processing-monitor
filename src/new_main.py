@@ -20,30 +20,30 @@ second_webservice = WebServiceBuilder() \
     .with_send_transaction_endpoint("/execute") \
     .build()
 
-coordinator.add_service(first_webservice)
 coordinator.add_service(second_webservice)
+coordinator.add_service(first_webservice)
 
 query_insert = QueryBuilder() \
     .with_method("INSERT") \
     .with_table_name("test") \
-    .with_values({"idtest": 6787, "value": 999}) \
+    .with_values({"idtest": 6785773, "value": 999}) \
     .build()
 
 query_delete = QueryBuilder() \
     .with_method("DELETE") \
     .with_table_name("test") \
-    .with_where("idtest=6787") \
+    .with_where("idtest=678577") \
     .build()
 
 query_update = QueryBuilder() \
     .with_method("UPDATE") \
     .with_table_name("test") \
-    .with_values({"value": 6787}) \
-    .with_where("idtest=6787") \
+    .with_values({"value": 999}) \
+    .with_where("value=567") \
     .build()
 
-first_webservice.add_query(query_update)
-second_webservice.add_query(query_update)
+first_webservice.add_query(query_delete)
+second_webservice.add_query(query_delete)
 
 try:
     coordinator.execute_transaction()
